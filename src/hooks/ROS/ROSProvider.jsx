@@ -6,7 +6,7 @@ const MAX_RETRIES = 5
 
 export function RosProvider({ children }) {
     const [ros, setRos] = useState(null)
-    const [status, setStatus] = useState('Connecting...')
+    const [status, setStatus] = useState(false)
     const retryRef = useRef(null)
     const connectRef = useRef(null)
     const retryCountRef = useRef(0)
@@ -16,7 +16,7 @@ export function RosProvider({ children }) {
 
         rosInstance.on('connection', () => {
             setRos(rosInstance)
-            setStatus('Connected')
+            setStatus(true)
             retryCountRef.current = 0  // reset on successful connection
             if (retryRef.current) {
                 clearTimeout(retryRef.current)
@@ -25,19 +25,20 @@ export function RosProvider({ children }) {
         })
 
         rosInstance.on('error', () => {
-            setStatus('Error')
+            setStatus(false)
         })
 
         rosInstance.on('close', () => {
             setRos(null)
 
+
             if (retryCountRef.current >= MAX_RETRIES) {
-                setStatus('Failed — max retries reached')
+                setStatus(false)
                 return
             }
 
             retryCountRef.current += 1
-            setStatus(`Reconnecting... (${retryCountRef.current}/${MAX_RETRIES})`)
+            setStatus(false)
             retryRef.current = setTimeout(() => connectRef.current?.(), 3000)
         })
 
@@ -49,6 +50,7 @@ export function RosProvider({ children }) {
     useEffect(() => {
         connectRef.current = connect
         const rosInstance = connect()
+
         return () => {
             if (retryRef.current) clearTimeout(retryRef.current)
             rosInstance.close()

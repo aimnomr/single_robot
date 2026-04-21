@@ -13,7 +13,7 @@ export default function Lists({ itemList }) {
                                 <div className={conditionalHelper(item.connected ? "bg-amber-300" : "bg-gray-400", "rounded-full size-3")}></div>
                             </div>
                             <div className="min-w-0 flex-auto">
-                                <p className="text-sm/6 font-semibold text-white">{item.name}</p>
+                                <p className="text-sm/6 font-semibold ">{item.name}</p>
                                 <p className="mt-1 truncate text-xs/5 text-gray-400">{item.email}</p>
                             </div>
                         </div>
@@ -29,10 +29,10 @@ export default function Lists({ itemList }) {
                 ))}
             </ul>
             <div className="flex justify-end mt-5 gap-5">
-                <Button className="rounded bg-cyan-600 px-4 py-2 text-sm text-white  hover:bg-cyan-800 min-w-20 max-w-25">
+                <Button className="rounded bg-cyan-600 px-4 py-2 text-sm   hover:bg-cyan-800 min-w-20 max-w-25">
                     Add
                 </Button>
-                <Button className="rounded bg-red-600 px-4 py-2 text-sm text-white  hover:bg-red-800 min-w-20 max-w-25">
+                <Button className="rounded bg-red-600 px-4 py-2 text-sm   hover:bg-red-800 min-w-20 max-w-25">
                     Remove
                 </Button>
             </div>
