@@ -6,8 +6,8 @@ import { RosProvider } from './hooks/ROS/ROSProvider.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <RosProvider>
+    {/* <RosProvider> */}
       <App />
-    </RosProvider>
+    {/* </RosProvider> */}
   </StrictMode>,
 )

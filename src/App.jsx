@@ -1,9 +1,8 @@
-import './App.css'
+import StackedPages from "./components/StackedPage"
 
 function App() {
   return (
-    <>
-    </>
+    <StackedPages/>
   )
 }
 
