@@ -8,6 +8,7 @@ import { conditionalHelper } from '../helper/conditionalHelper'
 import { useRos } from '../hooks/ROS/useRos'
 import MapView from './MapView'
 import RobotView from './RobotView'
+import AMCLPoseView from './AMCLPoseView'
 
 export default function StackedPages() {
 
@@ -62,11 +63,14 @@ export default function StackedPages() {
                     {/* <Lists itemList={robotList} />  */}
                     {/* Single Robot */}
                     <div className='flex flex-row justify-start'>
-                    <MapView/>
-                    <RobotView/>
+                        <MapView />
+                        <div className='flex flex-col justify-start'>
+                            <RobotView />
+                            <AMCLPoseView />
+                        </div>
                     </div>
                     <div className='flex flex-row divide-x jus divide-white/5 mt-5'>
-                    <RobotControl/>
+                        <RobotControl />
 
                     </div>
                 </div>

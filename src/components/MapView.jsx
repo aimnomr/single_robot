@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useMap } from '../hooks/ROS/useMap'
+import 
 
 function MapView() {
     const map = useMap()
@@ -13,7 +14,8 @@ function MapView() {
 
         canvas.width = map.width
         canvas.height = map.height
-
+        console.log(map.height)
+        console.log(map.width)
         const imageData = ctx.createImageData(map.width, map.height)
 
         for (let row = 0; row < map.height; row++) {
@@ -50,7 +52,7 @@ function MapView() {
     return (
     <div className="flex flex-col items-center gap-6 p-4">
 
-      <h2 className=" font-semibold">Map View</h2>
+      <h2 className=" font-semibold">Map View </h2>
             {map ? (
                 <div>
                     <canvas className='rounded'
@@ -62,7 +64,10 @@ function MapView() {
                     />
                 </div>
             ) : (
-                <p style={{ color: '#aaa' }}>Waiting for map data...</p>
+                <div className=''>
+                    <p style={{ color: '#aaa' }}>Waiting for map data...</p>
+
+                </div>
             )}
         </div>
     )
