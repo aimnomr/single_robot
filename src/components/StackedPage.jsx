@@ -7,6 +7,7 @@ import RobotControl from './RobotControl'
 import { conditionalHelper } from '../helper/conditionalHelper'
 import { useRos } from '../hooks/ROS/useRos'
 import MapView from './MapView'
+import RobotView from './RobotView'
 
 export default function StackedPages() {
 
@@ -52,7 +53,7 @@ export default function StackedPages() {
             </Disclosure>
             <header className="relative bg-gray-800 after:pointer-events-none after:absolute after:inset-x-0 after:inset-y-0 after:border-y after:border-white/10">
                 <div className="mx-auto max-w-7xl px-8 py-6">
-                    <h1 className="text-3xl font-bold tracking-tight ">Dashboard</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
                 </div>
             </header>
             <main>
@@ -60,8 +61,11 @@ export default function StackedPages() {
                     {/* Robots Page */}
                     {/* <Lists itemList={robotList} />  */}
                     {/* Single Robot */}
+                    <div className='flex flex-row justify-start'>
                     <MapView/>
-                    <div className='flex flex-row divide-x divide-white/5 mt-5'>
+                    <RobotView/>
+                    </div>
+                    <div className='flex flex-row divide-x jus divide-white/5 mt-5'>
                     <RobotControl/>
 
                     </div>
