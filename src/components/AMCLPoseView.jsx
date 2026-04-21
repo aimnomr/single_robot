@@ -1,10 +1,12 @@
 import { useAMCLPose } from "../hooks/ROS/useAMCLPose"
+import Skeleton from '@mui/material/Skeleton'
+
 
 function AMCLPoseView() {
     const pose = useAMCLPose()
     return (
-        <div className="flex flex-col items-center gap-6 p-4">
-            <h2 className=" font-semibold">AMCL Pose</h2>
+        <div className="flex flex-col items-center gap-2 p-4">
+            {/* <h2 className=" font-semibold">AMCL Pose</h2> */}
             {pose ? (
                 <div>
                     <p>X: {pose.x}</p>
@@ -14,7 +16,11 @@ function AMCLPoseView() {
 
                 </div>
             ) : (
-                <p>Waiting for pose data...</p>
+                <>
+                <Skeleton variant="rectangular" width={320} height={20} />
+                <Skeleton variant="rectangular" width={320} height={20} />
+                <Skeleton variant="rectangular" width={320} height={20} />
+                </>
             )}
         </div>
     )

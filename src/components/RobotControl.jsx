@@ -71,7 +71,7 @@ function RobotControl() {
 
   return (
     <div className="flex flex-col items-center gap-6 p-4">
-      <h2 className=" font-semibold">Robot Control</h2>
+      {/* <h2 className=" font-semibold">Robot Control</h2> */}
 
       {/* D-pad style layout */}
       <div className="grid grid-cols-3 gap-2">
