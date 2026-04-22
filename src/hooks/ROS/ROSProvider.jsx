@@ -7,17 +7,39 @@ const MAX_RETRIES = 5
 export function RosProvider({ children }) {
     const [ros, setRos] = useState(null)
     const [status, setStatus] = useState(false)
+    const [url, setUrl] = useState(null)
     const retryRef = useRef(null)
     const connectRef = useRef(null)
     const retryCountRef = useRef(0)
+    const rosInstanceRef = useRef(null)
 
-    const connect = useCallback(() => {
-        const rosInstance = new ROSLIB.Ros({ url: 'ws://localhost:9090' })
+    const disconnect = useCallback(() => {
+        if (retryRef.current) {
+            clearTimeout(retryRef.current)
+            retryRef.current = null
+        }
+        retryCountRef.current = 0
+        if (rosInstanceRef.current) {
+            rosInstanceRef.current.close()
+            rosInstanceRef.current = null
+        }
+        setRos(null)
+        setStatus(false)
+        setUrl(null)
+    }, [])
+
+    const connect = useCallback((newUrl) => {
+        if (rosInstanceRef.current) {
+            rosInstanceRef.current.close()
+        }
+
+        setUrl(newUrl)
+        const rosInstance = new ROSLIB.Ros({ url: newUrl })
 
         rosInstance.on('connection', () => {
             setRos(rosInstance)
             setStatus(true)
-            retryCountRef.current = 0  // reset on successful connection
+            retryCountRef.current = 0
             if (retryRef.current) {
                 clearTimeout(retryRef.current)
                 retryRef.current = null
@@ -29,11 +51,10 @@ export function RosProvider({ children }) {
         })
 
         rosInstance.on('close', () => {
-            setRos(null)
-
-
             if (retryCountRef.current >= MAX_RETRIES) {
+                setRos(null)
                 setStatus(false)
+                rosInstanceRef.current = null
                 return
             }
 
@@ -42,23 +63,16 @@ export function RosProvider({ children }) {
             retryRef.current = setTimeout(() => connectRef.current?.(), 3000)
         })
 
+        rosInstanceRef.current = rosInstance
         return rosInstance
     }, [])
 
-    console.log("Current Connection Try: ",retryCountRef.current)
-
     useEffect(() => {
         connectRef.current = connect
-        const rosInstance = connect()
-
-        return () => {
-            if (retryRef.current) clearTimeout(retryRef.current)
-            rosInstance.close()
-        }
     }, [connect])
 
     return (
-        <RosContext.Provider value={{ ros, status }}>
+        <RosContext.Provider value={{ ros, status, url, connect, disconnect }}>
             {children}
         </RosContext.Provider>
     )
