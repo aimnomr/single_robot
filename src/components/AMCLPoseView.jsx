@@ -8,18 +8,18 @@ function AMCLPoseView() {
         <div className="flex flex-col items-center gap-2 p-4">
             {/* <h2 className=" font-semibold">AMCL Pose</h2> */}
             {pose ? (
-                <div>
+                <>
                     <p>X: {pose.x}</p>
                     <p>Y: {pose.y}</p>
                     <p>Z: {pose.z}</p>
                     <p>W: {pose.w}</p>
 
-                </div>
+                </>
             ) : (
                 <>
-                <Skeleton variant="rectangular" width={320} height={20} />
-                <Skeleton variant="rectangular" width={320} height={20} />
-                <Skeleton variant="rectangular" width={320} height={20} />
+                <Skeleton variant="rectangular" width={200} height={20} />
+                <Skeleton variant="rectangular" width={200} height={20} />
+                <Skeleton variant="rectangular" width={200} height={20} />
                 </>
             )}
         </div>
