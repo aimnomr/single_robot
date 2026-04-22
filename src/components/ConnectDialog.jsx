@@ -15,7 +15,7 @@ export default function ConnectDialog({ open, onClose, onConnect }) {
             <DialogBackdrop className="fixed inset-0 bg-black/60" />
             <div className="fixed inset-0 flex items-center justify-center p-4">
                 <DialogPanel className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
-                    <DialogTitle className="text-xl font-bold mb-4">Connect to Robot</DialogTitle>
+                    <DialogTitle className="text-xl font-bold mb-4 text-white">Connect to Robot</DialogTitle>
                     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                         <div>
                             <label className="block text-sm text-gray-400 mb-1">ROS Bridge URL</label>
@@ -37,7 +37,7 @@ export default function ConnectDialog({ open, onClose, onConnect }) {
                             </button>
                             <button
                                 type="submit"
-                                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded font-medium transition"
+                                className=" text-white px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded font-medium transition"
                             >
                                 Connect
                             </button>
