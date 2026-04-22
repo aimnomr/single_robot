@@ -1,17 +1,29 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, Outlet } from 'react-router-dom'
 import { navLinks } from '../pages/config/routes'
 import { useRos } from '../hooks/ROS/useRos'
-import { Disclosure } from '@headlessui/react'
+import { Disclosure, Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react'
 import ConnectDialog from './ConnectDialog'
 
 function Layout() {
-    const { ros, status, url, disconnect, connect } = useRos()
+    const { ros, status, url, disconnect, connect, connectionError, clearError } = useRos()
     const [dialogOpen, setDialogOpen] = useState(false)
+    const [errorOpen, setErrorOpen] = useState(false)
 
     function handleConnect(newUrl) {
         connect(newUrl)
     }
+
+    function handleErrorClose() {
+        setErrorOpen(false)
+        clearError()
+    }
+
+    useEffect(() => {
+        if (connectionError) {
+            setErrorOpen(true)
+        }
+    }, [connectionError])
 
     return (
         <>
@@ -20,6 +32,24 @@ function Layout() {
                 onClose={() => setDialogOpen(false)}
                 onConnect={handleConnect}
             />
+
+            <Dialog open={errorOpen} onClose={handleErrorClose} className="relative z-50">
+                <DialogBackdrop className="fixed inset-0 bg-black/60" />
+                <div className="fixed inset-0 flex items-center justify-center p-4">
+                    <DialogPanel className="bg-gray-800 rounded-lg p-6 w-full max-w-md border border-red-500/50">
+                        <DialogTitle className="text-xl font-bold mb-2 text-red-400">Connection Error</DialogTitle>
+                        <p className="text-gray-300 mb-4">{connectionError}</p>
+                        <div className="flex justify-end">
+                            <button
+                                onClick={handleErrorClose}
+                                className="px-4 py-2 text-white bg-red-600 hover:bg-red-500 rounded font-medium transition"
+                            >
+                                OK
+                            </button>
+                        </div>
+                    </DialogPanel>
+                </div>
+            </Dialog>
 
             <div className="min-h-full text-white text-lg">
                 <Disclosure as="nav" className="bg-gray-800/50">

@@ -4,7 +4,7 @@ import { useRos } from '../hooks/ROS/useRos'
 import MapView from '../components/MapView'
 import RobotView from '../components/RobotView'
 import AMCLPoseView from '../components/AMCLPoseView'
-import SkeletonPage from '../components/SkeletonPage'
+import SkeletonRobot from '../components/SkeletonRobot'
 
 function Robots() {
     const { ros } = useRos()
@@ -12,7 +12,7 @@ function Robots() {
     return (
         <>
             {!ros ? (
-                <SkeletonPage />
+                <SkeletonRobot />
             ) : (
                 <main>
                     <div className="flex flex-col justify-start mx-auto max-w-7xl px-8 py-6">

@@ -1,11 +1,11 @@
 import Skeleton from '@mui/material/Skeleton'
 
-function SkeletonPage() {
+function SkeletonRobot() {
     return (
-        <div className="min-h-full text-white text-lg">
+        <>
             <header className="relative bg-gray-800 after:pointer-events-none after:absolute after:inset-x-0 after:inset-y-0 after:border-y after:border-white/10">
-                <div className="mx-auto max-w-7xl px-8 py-6">
-                    <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+                <div className="mx-auto max-w-7xl px-8 py-6 flex">
+                    <h1 className="text-3xl font-bold tracking-tight">Robots</h1>
                 </div>
             </header>
             <main>
@@ -13,15 +13,15 @@ function SkeletonPage() {
                     {/* Main content skeleton - mirrors real layout */}
                     <div className='flex flex-row justify-start'>
                         {/* Map skeleton */}
-                        <div className='flex flex-col items-center gap-6 p-4'>
-                            <Skeleton variant="rectangular" width={480} height={480} sx={{ borderRadius: 2 }} />
+                        <div className=' flex flex-col items-center gap-6 p-4'>
+                            <Skeleton variant="rectangular" width={360} height={360} sx={{ borderRadius: 2 }} />
                         </div>
 
                         {/* Right column skeletons */}
                         <div className='flex flex-col justify-start'>
                             {/* RobotView (camera) skeleton */}
                             <div className='flex flex-col items-center gap-6 p-4'>
-                                <div className="bg-gray-800 rounded-lg h-50 flex aspect-video items-center justify-center" style={{ width: 320 }}>
+                                <div className="rounded-lg h-50 flex aspect-video items-center justify-center" style={{ width: 320 }}>
                                     <Skeleton variant="rectangular" width={320} height={200} sx={{ borderRadius: 1 }} />
                                 </div>
                             </div>
@@ -46,11 +46,12 @@ function SkeletonPage() {
                                 ))}
                             </div>
                         </div>
-                    </div>                    
+                    </div>
                 </div>
             </main>
-        </div>
+        </>
+
     )
 }
 
-export default SkeletonPage
+export default SkeletonRobot
