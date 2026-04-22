@@ -21,9 +21,9 @@ function SkeletonPage({ onConnect }) {
                         </div>
                         <div className="flex items-center gap-3">
                             <div className="flex items-center gap-2">
-                                <span className={`w-2 h-2 rounded-full ${status ? 'bg-green-500' : 'bg-red-500'}`} />
+                                <span className="w-2 h-2 rounded-full bg-red-500" />
                                 <span className="text-sm text-gray-400">
-                                    {status ? 'Connected' : 'Disconnected'}
+                                    Disconnected
                                 </span>
                             </div>
                             <span className="text-xs text-gray-500 max-w-32 truncate">Connect to robot</span>
