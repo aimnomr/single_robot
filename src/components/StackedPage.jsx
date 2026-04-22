@@ -1,7 +1,7 @@
 import { Disclosure } from '@headlessui/react'
+import { Link } from 'react-router-dom'
 import { navLinks } from '../pages/config/routes'
 import RobotControl from './RobotControl'
-import { conditionalHelper } from '../helper/conditionalHelper'
 import { useRos } from '../hooks/ROS/useRos'
 import MapView from './MapView'
 import RobotView from './RobotView'
@@ -39,29 +39,24 @@ export default function StackedPages() {
                             <div className="flex h-16 items-center justify-between">
                                 <div className="flex items-center">
                                     <div className="shrink-0">
-                                        <a href="/">
+                                        <Link to="/">
                                             <img
                                                 alt="Your Company"
                                                 src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500"
                                                 className="size-8"
                                             />
-                                        </a>
+                                        </Link>
                                     </div>
                                     <div className="block">
                                         <div className="ml-10 flex items-baseline space-x-4">
                                             {navLinks.map((item) => (
-                                                <a
+                                                <Link
                                                     key={item.label}
-                                                    href={item.href}
-                                                    className={conditionalHelper(
-                                                        item.current
-                                                            ? 'bg-gray-950/50 '
-                                                            : 'text-gray-300 hover:bg-white/5 hover:',
-                                                        'rounded-md px-3 py-2 text-sm font-medium',
-                                                    )}
+                                                    to={item.href}
+                                                    className="text-gray-300 hover:bg-white/5 rounded-md px-3 py-2 text-sm font-medium"
                                                 >
                                                     {item.label}
-                                                </a>
+                                                </Link>
                                             ))}
                                         </div>
                                     </div>
