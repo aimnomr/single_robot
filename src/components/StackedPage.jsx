@@ -1,5 +1,4 @@
-import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
-import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { Disclosure} from '@headlessui/react'
 import { navLinks } from '../pages/config/routes'
 // import Lists from './List'
 // import { robotList } from '../pages/config/robots'
@@ -9,10 +8,15 @@ import { useRos } from '../hooks/ROS/useRos'
 import MapView from './MapView'
 import RobotView from './RobotView'
 import AMCLPoseView from './AMCLPoseView'
+import SkeletonPage from './SkeletonPage'
 
 export default function StackedPages() {
 
     const { ros } = useRos()
+
+    if (!ros) {
+        return <SkeletonPage />
+    }
 
     return (
         <div className="min-h-full text-white text-lg">

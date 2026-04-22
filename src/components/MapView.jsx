@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react'
 import { useMap } from '../hooks/ROS/useMap'
-import Skeleton from '@mui/material/Skeleton'
 
 function MapView() {
     const map = useMap()
@@ -49,23 +48,17 @@ function MapView() {
 
     }, [map])
 
+    if (!map) return null
+
     return (
         <div className="flex flex-col items-center gap-6 p-4">
-
-            {/* <h2 className=" font-semibold">Map View </h2> */}
-            {map ? (
-                <div>
-                    <canvas className='rounded'
-                        ref={canvasRef}
-                        style={{
-                            imageRendering: 'pixelated',  // keeps map crisp when scaled
-                            maxWidth: '100%'
-                        }}
-                    />
-                </div>
-            ) : (
-                <Skeleton variant="rectangular" width={480} height={480} />
-            )}
+            <canvas className='rounded'
+                ref={canvasRef}
+                style={{
+                    imageRendering: 'pixelated',
+                    maxWidth: '100%'
+                }}
+            />
         </div>
     )
 }

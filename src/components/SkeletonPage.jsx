@@ -1,0 +1,68 @@
+import Skeleton from '@mui/material/Skeleton'
+
+function SkeletonPage() {
+    return (
+        <div className="min-h-full text-white text-lg">
+            {/* Navbar skeleton */}
+            <div className="bg-gray-800/50 h-16 px-8 flex items-center">
+                <div className="shrink-0">
+                    <Skeleton variant="rectangular" width={32} height={32} sx={{ borderRadius: 1 }} />
+                </div>
+                <div className="ml-10 flex items-baseline space-x-4">
+                    <Skeleton variant="rectangular" width={60} height={24} sx={{ borderRadius: 1 }} />
+                    <Skeleton variant="rectangular" width={60} height={24} sx={{ borderRadius: 1 }} />
+                    <Skeleton variant="rectangular" width={60} height={24} sx={{ borderRadius: 1 }} />
+                </div>
+            </div>
+
+            {/* Header skeleton */}
+            <div className="bg-gray-800 after:pointer-events-none after:absolute after:inset-x-0 after:inset-y-0 after:border-y after:border-white/10 px-8 py-6">
+                <Skeleton variant="text" width={200} height={40} />
+            </div>
+
+            <main>
+                <div className="flex flex-col justify-start mx-auto max-w-7xl px-8 py-6">
+                    {/* Main content skeleton - mirrors real layout */}
+                    <div className='flex flex-row justify-start'>
+                        {/* Map skeleton */}
+                        <div className='flex flex-col items-center gap-6 p-4'>
+                            <Skeleton variant="rectangular" width={480} height={480} sx={{ borderRadius: 2 }} />
+                        </div>
+
+                        {/* Right column skeletons */}
+                        <div className='flex flex-col justify-start'>
+                            {/* RobotView (camera) skeleton */}
+                            <div className='flex flex-col items-center gap-6 p-4'>
+                                <div className="bg-gray-800 rounded-lg h-50 flex aspect-video items-center justify-center" style={{ width: 320 }}>
+                                    <Skeleton variant="rectangular" width={320} height={200} sx={{ borderRadius: 1 }} />
+                                </div>
+                            </div>
+
+                            {/* AMCLPoseView skeleton */}
+                            <div className='flex flex-col items-center gap-2 p-4'>
+                                <Skeleton variant="rectangular" width={200} height={20} />
+                                <Skeleton variant="rectangular" width={200} height={20} />
+                                <Skeleton variant="rectangular" width={200} height={20} />
+                                <Skeleton variant="rectangular" width={200} height={20} />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* RobotControl skeleton */}
+                    <div className='flex flex-row justify-start mt-5'>
+                        <div className='flex flex-col items-center gap-6 p-4'>
+                            <div className="grid grid-cols-3 gap-2">
+                                {/* 3x3 grid of skeleton buttons */}
+                                {[...Array(9)].map((_, i) => (
+                                    <Skeleton key={i} variant="rectangular" width={56} height={56} sx={{ borderRadius: 1 }} />
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    )
+}
+
+export default SkeletonPage
