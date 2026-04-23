@@ -62,7 +62,7 @@ useRos() // → { ros, status, url, connect, disconnect, connectionError, clearE
 ### Routing
 
 ```
-/                   → Dashboard (redirects to /dashboard)
+/                   → Dashboard
 /dashboard          → Dashboard
 /team               → Team
 /robots             → Robots (main robot control page)
@@ -77,15 +77,15 @@ The main page at `/robots` conditionally renders based on `ros`:
 
 ```
 !ros  →  SkeletonRobot (loading skeleton using MUI Skeleton)
-ros   →  MapView | RobotView + AMCLPoseView | RobotControl
+ros   →  MapView | RobotView + AMCLPoseView | RobotControl + GoalSelector
 ```
 
 ```
 ┌──────────────────────────────────────────────────────┐
 │ MapView              │ RobotView (camera feed)        │
 │  (occupancy grid     │ AMCLPoseView (x,y,z,w)         │
-│   rendered on                                │
-│   canvas)                                          │
+│   rendered on        │                                  │
+│   canvas)            │ GoalSelector (location buttons) │
 ├─────────────────────┴───────────────────────────────┤
 │ RobotControl (3×3 teleop grid, keyboard + mouse)       │
 └──────────────────────────────────────────────────────┘
@@ -112,8 +112,9 @@ ros   →  MapView | RobotView + AMCLPoseView | RobotControl
 | `SkeletonRobot.jsx` | MUI Skeleton loading placeholder matching Robots page layout |
 | `MapView.jsx` | Subscribes to `/reference/map` (nav_msgs/OccupancyGrid), renders pixelated grid on `<canvas>` |
 | `RobotView.jsx` | Subscribes to `/camera/front/image_raw/compressed` (sensor_msgs/CompressedImage), displays as `<img>` |
-| `AMCLPoseView.jsx` | Subscribes to `/amcl_pose` (geometry_msgs/PoseWithCovarianceStamped), shows x/y/z/w position |
+| `AMCLPoseView.jsx` | Subscribes to `/amcl_pose`, displays position (px, py) and orientation (qz, qw, rz in degrees) |
 | `RobotControl.jsx` | Teleop pad (3×3 grid), publishes to `/web_teleop/cmd_vel` (geometry_msgs/Twist), keyboard + mouse/touch |
+| `GoalSelector.jsx` | Renders location buttons from mock-data, publishes to `/move_base/goal` on click |
 | `List.jsx` | Generic list component (currently unused, for team management?) |
 
 ### ROS Hooks (src/hooks/ROS/)
@@ -124,8 +125,15 @@ ros   →  MapView | RobotView + AMCLPoseView | RobotControl
 | `useROS.js` | `useContext(RosContext)` — exposes `useRos()` hook |
 | `useMap.js` | Subscribes to `/reference/map`, returns `{width, height, resolution, origin, data}` |
 | `useCamera.js` | Subscribes to `/camera/front/image_raw/compressed`, returns base64 data URI |
-| `useAMCLPose.js` | Subscribes to `/amcl_pose`, returns `{x, y, z, w}` (quaternion orientation) |
+| `useAMCLPose.js` | Subscribes to `/amcl_pose`, returns `{px, py, qz, qw, rz}` (position x/y, quaternion z/w, roll z) |
 | `useTeleop.js` | Publishes to `/web_teleop/cmd_vel` on demand, `stop()` sends zero velocity |
+| `useMoveBase.js` | Publishes to `/move_base/goal` (move_base_msgs/MoveBaseActionGoal) with position + quaternion orientation |
+
+### Helpers (src/helper/)
+| File | Purpose |
+|------|---------|
+| `conditionalHelper.js` | Joins CSS class strings conditionally: `classes.filter(Boolean).join(' ')` |
+| `angleHelper.js` | Converts Euler angles to quaternion: `eulerToQuaternion(angle)` |
 
 ### Pages (src/pages/)
 | File | Purpose |
@@ -133,14 +141,9 @@ ros   →  MapView | RobotView + AMCLPoseView | RobotControl
 | `Dashboard.jsx` | Placeholder ("Overview dashboard will be displayed here") |
 | `Team.jsx` | Placeholder ("Team dashboard will be displayed here") |
 | `Locations.jsx` | Placeholder ("Locations dashboard will be displayed here") |
-| `Robots.jsx` | Main page: shows SkeletonRobot or [MapView + RobotView + AMCLPoseView + RobotControl] |
+| `Robots.jsx` | Main page: shows SkeletonRobot or [MapView + RobotView + AMCLPoseView + RobotControl + GoalSelector] |
 | `config/routes.js` | `navLinks` array defining the navbar links |
-| `config/robots.js` | (deleted/missing — was robot list config) |
-
-### Helpers (src/helper/)
-| File | Purpose |
-|------|---------|
-| `conditionalHelper.js` | Joins CSS class strings conditionally: `classes.filter(Boolean).join(' ')` |
+| `config/mock-data.js` | `mockLocationList` array with named positions (x, y, angle) for GoalSelector |
 
 ---
 
@@ -152,6 +155,7 @@ ros   →  MapView | RobotView + AMCLPoseView | RobotControl
 | `/camera/front/image_raw/compressed` | sensor_msgs/CompressedImage | Subscribe | Front camera feed (JPEG base64) |
 | `/amcl_pose` | geometry_msgs/PoseWithCovarianceStamped | Subscribe | Robot localization pose (x, y, orientation quaternion) |
 | `/web_teleop/cmd_vel` | geometry_msgs/Twist | Publish | Teleop velocity command (linear.x, angular.z) |
+| `/move_base/goal` | move_base_msgs/MoveBaseActionGoal | Publish | Navigation goal (position + quaternion orientation) |
 
 ---
 
@@ -187,8 +191,8 @@ ros   →  MapView | RobotView + AMCLPoseView | RobotControl
 
 ### Teleop (RobotControl.jsx)
 - 3×3 grid: Q/W/E (forward-turn), A/S/D (turn-in-place/stop), Z/X/C (backward-turn)
-- Keyboard: WASD-style keys (W=forward, S=stop, X=backward, A/D=turn, Q/E=forward-turn, Z/C=backward-turn)
-- Hold key/button → continuously publishes at 100ms interval
+- Keyboard: Q/W/E (forward with turn), A/S/D (turn/stop), Z/X/C (backward with turn)
+- Hold key/button → immediately fires action, then repeats at 100ms interval
 - Release → `stop()` sends zero velocity
 - Mouse: `mousedown` starts, `mouseup`/`mouseleave` stops
 - Touch: `touchstart` with `preventDefault`, `touchend` stops
@@ -218,9 +222,9 @@ npm run preview  # Preview production build
 
 ## Git Context
 
-- **Current branch**: `claude/manual-connection`
+- **Current branch**: `feature/single-goal`
 - **Main branch**: `main`
-- The `StackedPage.jsx` file was deleted (was a different layout approach)
+- Recent commits: `Move to Goal`, `Setup`, `Removed unused files`, `Updated CLAUDE.md`, `Reconnection Logic Removal`
 
 ---
 
