@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useRos } from './useRos'
 import * as ROSLIB from 'roslib'
-import { quaternionToEuler } from '../../helper/angleHelper'
+import { quaternionToEuler, eulerToQuaternion } from '../../helper/angleHelper'
 
 export function useAMCLPose() {
   const { ros } = useRos()
@@ -23,7 +23,9 @@ export function useAMCLPose() {
       setPose({
         px: msg.pose.pose.position.x.toFixed(3),
         py: msg.pose.pose.position.y.toFixed(3),
-        rz: angles.z.toFixed(3),
+        qz: msg.pose.pose.orientation.z.toFixed(3),
+        qw: msg.pose.pose.orientation.w.toFixed(3),
+        rz: angles.z.toFixed(3)
       })
     })
 

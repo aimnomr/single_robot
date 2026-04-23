@@ -1,10 +1,10 @@
-
 import RobotControl from "../components/RobotControl"
 import { useRos } from '../hooks/ROS/useRos'
 import MapView from '../components/MapView'
 import RobotView from '../components/RobotView'
 import AMCLPoseView from '../components/AMCLPoseView'
 import SkeletonRobot from '../components/SkeletonRobot'
+import GoalSelector from '../components/GoalSelector'
 
 function Robots() {
     const { ros } = useRos()
@@ -22,6 +22,7 @@ function Robots() {
                             <div className='flex flex-col justify-start'>
                                 <RobotView />
                                 <AMCLPoseView />
+                                <GoalSelector />
                             </div>
                         </div>
                         <div className='flex flex-row divide-x jus divide-white/5 mt-5'>

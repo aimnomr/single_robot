@@ -12,7 +12,9 @@ function AMCLPoseView() {
             <p>X: {pose.px}</p>
             <p>Y: {pose.py}</p>
             <p>Quarternion</p>
-            <p>Z: {pose.rz}</p>
+            <p>qZ: {pose.qz}</p>
+            <p>qW: {pose.qw}</p>
+            <p>rZ: {pose.rz}</p>
         </div>
     )
 }
