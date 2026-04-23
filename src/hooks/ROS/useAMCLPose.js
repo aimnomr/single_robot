@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useRos } from './useRos'
 import * as ROSLIB from 'roslib'
+import { quaternionToEuler } from '../../helper/angleHelper'
 
 export function useAMCLPose() {
   const { ros } = useRos()
@@ -16,11 +17,13 @@ export function useAMCLPose() {
     })
 
     topic.subscribe((msg) => {
+
+      const angles = quaternionToEuler(msg.pose.pose.orientation)
+
       setPose({
-        x: msg.pose.pose.position.x.toFixed(3),
-        y: msg.pose.pose.position.y.toFixed(3),
-        z: msg.pose.pose.orientation.z.toFixed(3),
-        w: msg.pose.pose.orientation.w.toFixed(3),
+        px: msg.pose.pose.position.x.toFixed(3),
+        py: msg.pose.pose.position.y.toFixed(3),
+        rz: angles.z.toFixed(3),
       })
     })
 

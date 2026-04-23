@@ -8,10 +8,11 @@ function AMCLPoseView() {
 
     return (
         <div className="flex flex-col items-center gap-2 p-4">
-            <p>X: {pose.x}</p>
-            <p>Y: {pose.y}</p>
-            <p>Z: {pose.z}</p>
-            <p>W: {pose.w}</p>
+            <p>Point</p>
+            <p>X: {pose.px}</p>
+            <p>Y: {pose.py}</p>
+            <p>Quarternion</p>
+            <p>Z: {pose.rz}</p>
         </div>
     )
 }
