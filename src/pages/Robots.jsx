@@ -21,7 +21,7 @@ function Robots() {
                             <MapView />
                             <div className='flex flex-col justify-start'>
                                 <RobotView />
-                                <AMCLPoseView />
+                                {/* <AMCLPoseView /> */}
                                 <GoalSelector />
                             </div>
                         </div>

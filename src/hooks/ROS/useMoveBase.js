@@ -36,7 +36,7 @@ export function useMoveBase() {
             goal: {
                 target_pose: {
                     header: {
-                        frame_id: "map"   // ← this is what was missing
+                        frame_id: "map"
                     },
                     pose: {
                         position: {
