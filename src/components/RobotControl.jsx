@@ -61,8 +61,9 @@ function RobotControl() {
       onMouseDown={() => startCommand(commandKey)}
       onMouseUp={stopCommand}
       onMouseLeave={stopCommand}  // stop if mouse drifts off button
-      onTouchStart={(e) => { e.preventDefault(); startCommand(commandKey) }}
-      onTouchEnd={stopCommand}
+      // onTouchStart={(e) => { 
+      //   e.preventDefault(); startCommand(commandKey) }}
+      // onTouchEnd={stopCommand}
       className="flex items-center justify-center w-14 h-14 bg-gray-700 hover:bg-gray-600 active:bg-gray-500  font-bold rounded-lg select-none"
     >
       {label}
