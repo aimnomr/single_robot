@@ -14,7 +14,7 @@ import { useRos } from '../hooks/ROS/useRos'
  */
 export default function Ros2dMapView({ className = '' }) {
     const { ros } = useRos()
-    const containerRef = useRef(null)   
+    const containerRef = useRef(null)
     const [error, setError] = useState(null)
 
     // Store refs for cleanup
@@ -29,16 +29,13 @@ export default function Ros2dMapView({ className = '' }) {
         try {
             if (!isMounted || !containerRef.current) return
 
-            // Clear any existing content
             containerRef.current.innerHTML = ''
 
-            // Create the main viewer
             const viewer = new ROS2D.Viewer({
                 divID: containerRef.current.id,
                 width: 480,
                 height: 480,
             })
-            viewerRef.current = viewer
 
             // Setup the map client with continuous updates
             const gridClient = new ROS2D.OccupancyGridClient({
@@ -47,9 +44,10 @@ export default function Ros2dMapView({ className = '' }) {
                 continuous: true,
                 topic: '/reference/map'
             })
+
+            viewerRef.current = viewer
             gridClientRef.current = gridClient
 
-            // Scale the canvas to fit the map when it changes
             gridClient.on('change', function () {
                 if (!isMounted) return
                 viewer.scaleToDimensions(
@@ -101,7 +99,7 @@ export default function Ros2dMapView({ className = '' }) {
     return (
         <div
             ref={containerRef}
-            id="ros2d-map-container"
+            id="map"
             className={`flex flex-col items-center rounded ${className}`}
             style={{
                 minHeight: '480px',
