@@ -6,17 +6,7 @@ import { quaternionToEuler } from "../helper/angleHelper"
 import { useOdometry } from '../hooks/ROS/useOdom'
 import { useMap } from '../hooks/ROS/useMap'
 
-/**
- * Ros2dMapView - Map visualization component using ros2djs
- *
- * Uses ROS2D.OccupancyGridClient with continuous updates to render
- * the occupancy grid map on an EaselJS canvas.
- *
- * Props:
- * - className: Optional CSS classes for the container div
- *
- * To swap with MapView: replace <MapView /> with <Ros2dMapView /> in Robots.jsx
- */
+
 export default function Ros2dMapView({ className = '' }) {
     const { ros } = useRos()
     const containerRef = useRef(null)
@@ -71,7 +61,7 @@ export default function Ros2dMapView({ className = '' }) {
             })
 
             const localPathShape = new ROS2D.PathShape({
-                strokeSize: 0.05,
+                strokeSize: 0.03,
                 strokeColor: createjs.Graphics.getRGB(200, 100, 100),
             });
             localPathShapeRef.current = localPathShape
@@ -87,7 +77,6 @@ export default function Ros2dMapView({ className = '' }) {
             const navArrow = new ROS2D.ArrowShape({
                 size: 0.25,
                 strokeSize: 0.1,
-                // strokeColor: createjs.Graphics.getRGB(255, 255, 0),
                 fillColor: createjs.Graphics.getRGB(0, 100, 255),
             });
             navArrowRef.current = navArrow

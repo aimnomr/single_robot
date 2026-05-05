@@ -17,9 +17,7 @@ export function useDWAPlannerGlobal() {
         })
 
         topic.subscribe((msg) => {
-            setPaths(
-                msg
-            )
+            setPaths(msg)
         })
         return () => {
             topic.unsubscribe()
