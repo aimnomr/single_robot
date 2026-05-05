@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRos } from '../hooks/ROS/useRos'
-import { useDWAPlanner } from '../hooks/ROS/useDWAPlanner'
+import { useDWAPlannerLocal } from '../hooks/ROS/useDWAPlannerLocal'
+import { useDWAPlannerGlobal } from '../hooks/ROS/useDWAPlannerGlobal'
 import { quaternionToEuler } from "../helper/angleHelper"
 import { useOdometry } from '../hooks/ROS/useOdom'
+import { useMap } from '../hooks/ROS/useMap'
 
 /**
  * Ros2dMapView - Map visualization component using ros2djs
@@ -19,13 +21,15 @@ export default function Ros2dMapView({ className = '' }) {
     const { ros } = useRos()
     const containerRef = useRef(null)
     const [error, setError] = useState(null)
-    const paths = useDWAPlanner()
+    const lpaths = useDWAPlannerLocal()
+    const gpaths = useDWAPlannerGlobal()
     const robotPose = useOdometry()
 
     // Store refs for cleanup
     const viewerRef = useRef(null)
     const gridClientRef = useRef(null)
-    const pathShapeRef = useRef(null)
+    const localPathShapeRef = useRef(null)
+    const globalPathShapeRef = useRef(null)
     const navArrowRef = useRef(null)
 
     useEffect(() => {
@@ -41,8 +45,8 @@ export default function Ros2dMapView({ className = '' }) {
 
             const viewer = new ROS2D.Viewer({
                 divID: containerRef.current.id,
-                width: 480,
-                height: 480,
+                width: 640,
+                height: 640,
             })
             viewerRef.current = viewer
 
@@ -66,12 +70,19 @@ export default function Ros2dMapView({ className = '' }) {
                 )
             })
 
-            const pathShape = new ROS2D.PathShape({
+            const localPathShape = new ROS2D.PathShape({
                 strokeSize: 0.05,
-                strokeColor: createjs.Graphics.getRGB(255, 100, 100),
+                strokeColor: createjs.Graphics.getRGB(200, 100, 100),
             });
-            pathShapeRef.current = pathShape
-            viewer.addObject(pathShape)
+            localPathShapeRef.current = localPathShape
+            viewer.addObject(localPathShape)
+
+            const globalPathShape = new ROS2D.PathShape({
+                strokeSize: 0.01,
+                strokeColor: createjs.Graphics.getRGB(0, 0, 100),
+            });
+            globalPathShapeRef.current = globalPathShape
+            viewer.addObject(globalPathShape)
 
             const navArrow = new ROS2D.ArrowShape({
                 size: 0.25,
@@ -120,9 +131,14 @@ export default function Ros2dMapView({ className = '' }) {
     }, [robotPose])
 
     useEffect(() => {
-        if (!pathShapeRef.current || !paths?.poses?.length) return
-        pathShapeRef.current.setPath(paths)
-    }, [paths])
+        if (!localPathShapeRef.current || !lpaths?.poses?.length) return
+        localPathShapeRef.current.setPath(lpaths)
+    }, [lpaths])
+
+    useEffect(() => {
+        if (!globalPathShapeRef.current || !gpaths?.poses?.length) return
+        globalPathShapeRef.current.setPath(gpaths)
+    }, [gpaths])
 
     if (error) {
         return (

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useRos } from './useRos'
 import * as ROSLIB from 'roslib'
 
-export function useDWAPlanner() {
+export function useDWAPlannerLocal() {
     const { ros } = useRos()
     const [paths, setPaths] = useState(0)
 
