@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Navigation Image - ROS2D.js</title>
+
+<script src="https://cdn.jsdelivr.net/npm/easeljs@1/lib/easeljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/eventemitter2@6/lib/eventemitter2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ros2d@0/build/ros2d.min.js"></script>
+
+<script>
+  /**
+   * Navigation Image Example
+   *
+   * Uses NavigationImage to display a custom image as a marker.
+   * Unlike NavigationArrow which is a simple shape, NavigationImage
+   * can use any PNG/SVG image (e.g., robot icon, arrow, custom symbol).
+   *
+   * Use case: Custom robot icons, branded markers, or pictogram-based
+   * visualization.
+   */
+  function init() {
+    // Create viewer
+    var viewer = new ROS2D.Viewer({
+      divID : 'navimage',
+      width : 640,
+      height : 480,
+      background : '#1a1a2e'
+    });
+
+    // Center and scale the view
+    viewer.scene.x = 320;
+    viewer.scene.y = 240;
+    viewer.scene.scaleX = 15;
+    viewer.scene.scaleY = -15;
+
+    // Create a NavigationImage with a robot icon
+    // The image automatically rotates 90° so 0° points left (ROS convention)
+    var robotIcon = new ROS2D.NavigationImage({
+      size : 8,
+      image : 'https://cdn-icons-png.flaticon.com/32/1136/1136944.png',  // Robot icon
+      pulse : true,
+      alpha : 0.9
+    });
+    robotIcon.x = 0;
+    robotIcon.y = 0;
+    viewer.addObject(robotIcon);
+
+    // Add a second NavigationImage with different settings
+    var arrowIcon = new ROS2D.NavigationImage({
+      size : 6,
+      image : 'https://cdn-icons-png.flaticon.com/32/32/32260.png',  // Arrow icon
+      pulse : false,
+      alpha : 0.8
+    });
+    arrowIcon.x = 10;
+    arrowIcon.y = 5;
+    arrowIcon.rotation = 45;
+    viewer.addObject(arrowIcon);
+
+    // Animate the robot icon rotation
+    var angle = 0;
+    createjs.Ticker.addEventListener('tick', function() {
+      angle += 1;
+      robotIcon.rotation = angle;
+    });
+
+    // Add label
+    var label = new createjs.Text("NavigationImage - Custom icons", "14px Arial", "#FFFFFF");
+    label.x = -150;
+    label.y = -100;
+    viewer.addObject(label);
+  }
+</script>
+</head>
+
+<body onload="init()">
+  <h1>Navigation Image</h1>
+  <p>
+    Displays custom images as markers using <tt>NavigationImage</tt>.
+    Unlike shape-based markers, you can use any PNG/SVG image.
+  </p>
+  <h2>Features</h2>
+  <ul>
+    <li><strong>size</strong>: Controls the display size in meters</li>
+    <li><strong>image</strong>: URL to the image file</li>
+    <li><strong>pulse</strong>: Optional pulsing animation</li>
+    <li><strong>alpha</strong>: Transparency (0-1)</li>
+  </ul>
+  <h2>Use Cases</h2>
+  <ul>
+    <li>Custom robot icons for multi-robot visualization</li>
+    <li>Branded markers for specific locations</li>
+    <li>Pictograms for points of interest</li>
+  </ul>
+  <p>
+    <em>Note: The robot icon rotates to demonstrate orientation control.</em>
+  </p>
+  <div id="navimage"></div>
+</body>
+</html>

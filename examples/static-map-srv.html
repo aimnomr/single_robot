@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Static Map via Service Call - ROS2D.js</title>
+
+<script src="https://cdn.jsdelivr.net/npm/easeljs@1/lib/easeljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/eventemitter2@6/lib/eventemitter2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ros2d@0/build/ros2d.min.js"></script>
+
+<script>
+  /**
+   * Static Map via Service Call Example
+   *
+   * Uses OccupancyGridSrvClient to fetch a static map from map_server
+   * via a service call instead of subscribing to a topic.
+   *
+   * Use case: When you want to load a map once at startup using
+   * the standard ROS map_server service interface.
+   */
+  function init() {
+    // Connect to ROS
+    var ros = new ROSLIB.Ros({
+      url : 'ws://localhost:9090'
+    });
+
+    // Create the main viewer
+    var viewer = new ROS2D.Viewer({
+      divID : 'map',
+      width : 640,
+      height : 480
+    });
+
+    // Setup the static map client via service call
+    // Calls /static_map service (nav_msgs/GetMap)
+    var gridClientSrv = new ROS2D.OccupancyGridSrvClient({
+      ros : ros,
+      rootObject : viewer.scene,
+      service : '/static_map'  // Default service name for map_server
+    });
+
+    // Scale the canvas when map is received
+    gridClientSrv.on('change', function(grid) {
+      viewer.scaleToDimensions(grid.width, grid.height);
+      viewer.shift(grid.pose.position.x, grid.pose.position.y);
+    });
+  }
+</script>
+</head>
+
+<body onload="init()">
+  <h1>Static Map via Service Call</h1>
+  <p>
+    Fetches a static map from the <tt>/static_map</tt> service using
+    <tt>nav_msgs/GetMap</tt>. This is the standard interface provided by
+    the ROS <tt>map_server</tt> package.
+  </p>
+  <h2>Requirements</h2>
+  <ol>
+    <li><tt>roscore</tt></li>
+    <li><tt>rosrun map_server map_server /path/to/map.yaml</tt></li>
+    <li><tt>roslaunch rosbridge_server rosbridge_websocket.launch</tt></li>
+  </ol>
+  <h2>Difference from Topic-based Loading</h2>
+  <ul>
+    <li><strong>Service call:</strong> One-time fetch, map loaded once</li>
+    <li><strong>Topic subscription:</strong> Can receive updates (useful for SLAM)</li>
+  </ul>
+  <div id="map"></div>
+</body>
+</html>

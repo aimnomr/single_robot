@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Pan & Zoom View - ROS2D.js</title>
+
+<script src="https://cdn.jsdelivr.net/npm/easeljs@1/lib/easeljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/eventemitter2@6/lib/eventemitter2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ros2d@0/build/ros2d.min.js"></script>
+
+<script>
+  /**
+   * Pan & Zoom View Example
+   *
+   * Demonstrates interactive panning and zooming controls.
+   * PanView and ZoomView can be added to any viewer for
+   * mouse-based navigation.
+   *
+   * Use case: Interactive map exploration, similar to Google Maps
+   * or RViz navigation.
+   */
+  function init() {
+    // Create viewer
+    var viewer = new ROS2D.Viewer({
+      divID : 'panzoom',
+      width : 800,
+      height : 500,
+      background : '#16213e'
+    });
+
+    // Initialize pan and zoom handlers
+    var panView = new ROS2D.PanView({
+      rootObject : viewer.scene
+    });
+
+    var zoomView = new ROS2D.ZoomView({
+      rootObject : viewer.scene,
+      minScale : 0.1
+    });
+
+    // Add a grid for visual reference
+    var grid = new ROS2D.Grid({
+      size : 100,
+      cellSize : 1.0,
+      lineWidth : 0.02
+    });
+    viewer.addObject(grid);
+
+    // Add some colored markers to show movement
+    var marker1 = new ROS2D.NavigationArrow({
+      size : 3,
+      fillColor : createjs.Graphics.getRGB(255, 100, 100),
+      strokeColor : createjs.Graphics.getRGB(255, 255, 255)
+    });
+    marker1.x = 20;
+    marker1.y = 20;
+    viewer.addObject(marker1);
+
+    var marker2 = new ROS2D.NavigationArrow({
+      size : 3,
+      fillColor : createjs.Graphics.getRGB(100, 255, 100),
+      strokeColor : createjs.Graphics.getRGB(255, 255, 255)
+    });
+    marker2.x = -30;
+    marker2.y = 15;
+    marker2.rotation = 45;
+    viewer.addObject(marker2);
+
+    var marker3 = new ROS2D.NavigationArrow({
+      size : 3,
+      fillColor : createjs.Graphics.getRGB(100, 100, 255),
+      strokeColor : createjs.Graphics.getRGB(255, 255, 255)
+    });
+    marker3.x = 10;
+    marker3.y = -25;
+    marker3.rotation = -90;
+    viewer.addObject(marker3);
+
+    // Mouse event handlers for panning
+    var isPanning = false;
+    var canvas = document.querySelector('#panzoom canvas');
+
+    canvas.addEventListener('mousedown', function(event) {
+      // Middle mouse button or Shift+click for panning
+      if (event.button === 1 || event.shiftKey) {
+        isPanning = true;
+        panView.startPan(event.offsetX, event.offsetY);
+      }
+    });
+
+    canvas.addEventListener('mousemove', function(event) {
+      if (isPanning) {
+        panView.pan(event.offsetX, event.offsetY);
+      }
+    });
+
+    canvas.addEventListener('mouseup', function() {
+      isPanning = false;
+    });
+
+    canvas.addEventListener('mouseleave', function() {
+      isPanning = false;
+    });
+
+    // Mouse wheel for zooming
+    canvas.addEventListener('wheel', function(event) {
+      event.preventDefault();
+      var zoomFactor = event.deltaY > 0 ? 0.9 : 1.1;
+      zoomView.startZoom(event.offsetX, event.offsetY);
+      zoomView.zoom(zoomFactor);
+    });
+
+    // Touch support for mobile devices
+    var isTouchPanning = false;
+    canvas.addEventListener('touchstart', function(event) {
+      if (event.touches.length === 1) {
+        isTouchPanning = true;
+        var touch = event.touches[0];
+        panView.startPan(touch.clientX - canvas.offsetLeft, touch.clientY - canvas.offsetTop);
+      }
+      event.preventDefault();
+    });
+
+    canvas.addEventListener('touchmove', function(event) {
+      if (isTouchPanning && event.touches.length === 1) {
+        var touch = event.touches[0];
+        panView.pan(touch.clientX - canvas.offsetLeft, touch.clientY - canvas.offsetTop);
+      }
+      event.preventDefault();
+    });
+
+    canvas.addEventListener('touchend', function() {
+      isTouchPanning = false;
+    });
+
+    // Add instruction overlay
+    var instructions = new createjs.Container();
+    var bg = new createjs.Shape();
+    bg.graphics.beginFill("rgba(0,0,0,0.7)").drawRoundRect(-380, -230, 760, 100, 10);
+    instructions.addChild(bg);
+
+    var text = new createjs.Text(
+      "Mouse: Wheel to zoom | Middle-click or Shift+drag to pan\n" +
+      "Touch: Single finger drag to pan",
+      "bold 16px Arial",
+      "#FFFFFF"
+    );
+    text.textAlign = "center";
+    instructions.addChild(text);
+    viewer.addObject(instructions);
+  }
+</script>
+</head>
+
+<body onload="init()">
+  <h1>Pan & Zoom View</h1>
+  <p>
+    Interactive pan and zoom controls for map navigation.
+  </p>
+  <h2>Controls</h2>
+  <ul>
+    <li><strong>Mouse wheel</strong>: Zoom in/out (centered on cursor)</li>
+    <li><strong>Middle mouse button</strong>: Pan the view</li>
+    <li><strong>Shift + Left drag</strong>: Alternative pan gesture</li>
+    <li><strong>Touch drag</strong>: Pan on mobile devices</li>
+  </ul>
+  <h2>Components</h2>
+  <ul>
+    <li><tt>PanView</tt>: Handles panning gestures</li>
+    <li><tt>ZoomView</tt>: Handles zoom with configurable <tt>minScale</tt></li>
+  </ul>
+  <h2>Integration with Maps</h2>
+  <p>
+    These components work seamlessly with <tt>OccupancyGridClient</tt>,
+    <tt>ImageMapClient</tt>, and all marker types. Simply add them to your
+    viewer after creating the map client.
+  </p>
+  <div id="panzoom"></div>
+</body>
+</html>

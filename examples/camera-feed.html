@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Camera Feed - ROS2D.js</title>
+
+<script src="https://cdn.jsdelivr.net/npm/easeljs@1/lib/easeljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/eventemitter2@6/lib/eventemitter2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ros2d@0/build/ros2d.min.js"></script>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #0d1117;
+    color: #c9d1d9;
+    margin: 0;
+    padding: 20px;
+  }
+  h1 { color: #58a6ff; }
+  h2 { color: #7ee787; }
+  .container {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 20px;
+  }
+  .panel {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 15px;
+  }
+  .status {
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin: 10px 0;
+  }
+  .connected { background: #238636; color: white; }
+  .disconnected { background: #da3633; color: white; }
+  input[type="text"] {
+    width: 200px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #30363d;
+    background: #0d1117;
+    color: #c9d1d9;
+  }
+  button {
+    background: #238636;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin: 5px;
+  }
+  button:hover { background: #2ea043; }
+  #cameraFeed {
+    width: 100%;
+    border-radius: 6px;
+    background: #000;
+    min-height: 400px;
+    object-fit: contain;
+  }
+  .data-display {
+    font-family: 'Consolas', monospace;
+    font-size: 12px;
+    background: #0d1117;
+    padding: 10px;
+    border-radius: 6px;
+  }
+  .data-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    border-bottom: 1px solid #21262d;
+  }
+  .data-label { color: #8b949e; }
+  .data-value { color: #79c0ff; }
+  .placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 400px;
+    color: #484f58;
+    font-size: 14px;
+  }
+</style>
+
+<script>
+  /**
+   * Camera Feed Example
+   *
+   * Displays compressed camera images from ROS.
+   * Supports both JPEG and PNG formats.
+   *
+   * Topics used:
+   * - /camera/front/image_raw/compressed (sensor_msgs/CompressedImage)
+   *
+   * Use case: Viewing robot camera feed for teleoperation,
+   * visual inspection, or recording.
+   */
+
+  var ros = null;
+  var cameraTopic = null;
+  var isRosConnected = false;
+  var frameCount = 0;
+  var lastFpsTime = Date.now();
+
+  function init() {
+    updateStatus();
+    startDemoMode();
+  }
+
+  function connectToRos() {
+    if (ros) ros.close();
+
+    var url = document.getElementById('rosUrl').value;
+    ros = new ROSLIB.Ros({ url: url });
+
+    ros.on('connection', function() {
+      isRosConnected = true;
+      frameCount = 0;
+      lastFpsTime = Date.now();
+      updateStatus();
+      startRosMode();
+    });
+
+    ros.on('error', function() {
+      isRosConnected = false;
+      updateStatus();
+    });
+
+    ros.on('close', function() {
+      isRosConnected = false;
+      updateStatus();
+    });
+  }
+
+  function startRosMode() {
+    // Subscribe to compressed camera image
+    cameraTopic = new ROSLIB.Topic({
+      ros: ros,
+      name: '/camera/front/image_raw/compressed',
+      messageType: 'sensor_msgs/CompressedImage'
+    });
+
+    cameraTopic.subscribe(function(msg) {
+      displayImage(msg);
+    });
+  }
+
+  function displayImage(msg) {
+    var img = document.getElementById('cameraFeed');
+
+    // Determine image type from format field
+    var imgType = 'jpeg';
+    if (msg.format && msg.format.indexOf('png') >= 0) {
+      imgType = 'png';
+    } else if (msg.format && msg.format.indexOf('jpeg') >= 0) {
+      imgType = 'jpeg';
+    }
+
+    // Convert data to base64
+    var base64;
+    if (typeof msg.data === 'string') {
+      base64 = msg.data;
+    } else {
+      // Handle array buffer
+      var bytes = new Uint8Array(msg.data);
+      var binary = '';
+      for (var i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      base64 = window.btoa(binary);
+    }
+
+    img.src = 'data:image/' + imgType + ';base64,' + base64;
+
+    // Update FPS
+    frameCount++;
+    var elapsed = Date.now() - lastFpsTime;
+    if (elapsed >= 1000) {
+      document.getElementById('fpsValue').textContent = frameCount;
+      frameCount = 0;
+      lastFpsTime = Date.now();
+    }
+
+    // Update format display
+    document.getElementById('formatValue').textContent = msg.format || 'unknown';
+  }
+
+  function startDemoMode() {
+    // Show placeholder
+    var img = document.getElementById('cameraFeed');
+    img.style.display = 'none';
+
+    var placeholder = document.getElementById('placeholder');
+    placeholder.style.display = 'flex';
+    placeholder.innerHTML = '<div style="text-align:center;">Demo Mode<br><small>No camera data without ROS connection</small></div>';
+  }
+
+  function updateStatus() {
+    var statusDiv = document.getElementById('status');
+    if (isRosConnected) {
+      statusDiv.className = 'status connected';
+      statusDiv.textContent = 'Connected to ROS';
+    } else {
+      statusDiv.className = 'status disconnected';
+      statusDiv.textContent = 'Demo Mode';
+    }
+  }
+</script>
+</head>
+
+<body onload="init()">
+  <h1>Camera Feed</h1>
+  <p>
+    Displays compressed camera images from <tt>sensor_msgs/CompressedImage</tt> messages.
+    Automatically detects JPEG or PNG format.
+  </p>
+
+  <div class="container">
+    <div class="panel">
+      <div style="margin-bottom:10px;">
+        <div id="status" class="status disconnected">Demo Mode</div>
+        <input type="text" id="rosUrl" value="ws://localhost:9090">
+        <button onclick="connectToRos()">Connect</button>
+      </div>
+      <img id="cameraFeed" style="display:none;">
+      <div id="placeholder" class="placeholder">
+        <div style="text-align:center;">Demo Mode<br><small>No camera data without ROS connection</small></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Stream Info</h2>
+      <div class="data-display">
+        <div class="data-row">
+          <span class="data-label">FPS:</span>
+          <span class="data-value" id="fpsValue">0</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">Format:</span>
+          <span class="data-value" id="formatValue">-</span>
+        </div>
+      </div>
+
+      <h2>Topic</h2>
+      <p class="topic-list" style="font-size:11px;color:#8b949e;">
+        <code>/camera/front/image_raw/compressed</code>
+      </p>
+      <p style="font-size:12px;color:#8b949e;margin-top:10px;">
+        Message type: <tt>sensor_msgs/CompressedImage</tt>
+      </p>
+
+      <h2>Notes</h2>
+      <ul style="font-size:12px;color:#8b949e;padding-left:18px;">
+        <li>Compressed images reduce bandwidth significantly</li>
+        <li>Supports JPEG (most common) and PNG formats</li>
+        <li>For uncompressed, use <code>/camera/front/image_raw</code></li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

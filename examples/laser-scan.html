@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Laser Scan Visualization - ROS2D.js</title>
+
+<script src="https://cdn.jsdelivr.net/npm/easeljs@1/lib/easeljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/eventemitter2@6/lib/eventemitter2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ros2d@0/build/ros2d.min.js"></script>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #0d1117;
+    color: #c9d1d9;
+    margin: 0;
+    padding: 20px;
+  }
+  h1 { color: #58a6ff; }
+  h2 { color: #7ee787; }
+  .container {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 20px;
+  }
+  .panel {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 15px;
+  }
+  .status {
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin: 10px 0;
+  }
+  .connected { background: #238636; color: white; }
+  .disconnected { background: #da3633; color: white; }
+  input[type="text"] {
+    width: 200px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #30363d;
+    background: #0d1117;
+    color: #c9d1d9;
+  }
+  button {
+    background: #238636;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin: 5px;
+  }
+  button:hover { background: #2ea043; }
+  .data-display {
+    font-family: 'Consolas', monospace;
+    font-size: 12px;
+    background: #0d1117;
+    padding: 10px;
+    border-radius: 6px;
+  }
+  .data-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    border-bottom: 1px solid #21262d;
+  }
+  .data-label { color: #8b949e; }
+  .data-value { color: #79c0ff; }
+</style>
+
+<script>
+  /**
+   * Laser Scan Visualization Example
+   *
+   * Visualizes sensor_msgs/LaserScan messages from your LiDAR.
+   * Shows the scan points as a line around the robot position.
+   *
+   * Topics used:
+   * - /lidar/center/obstacle_scan - Obstacle detection scan
+   * - /lidar/center/slam_scan_filtered - SLAM-processed scan
+   *
+   * Use case: Visualizing obstacle detection, SLAM input, or
+   * debugging LiDAR data quality.
+   */
+
+  var ros = null;
+  var viewer = null;
+  var laserShape = null;
+  var robotArrow = null;
+  var isRosConnected = false;
+  var laserTopic = null;
+  var scanData = null;
+
+  function init() {
+    // Create viewer
+    viewer = new ROS2D.Viewer({
+      divID: 'scan',
+      width: 700,
+      height: 500,
+      background: '#0a0e14'
+    });
+
+    // Center and scale
+    viewer.scene.x = 350;
+    viewer.scene.y = 250;
+    viewer.scene.scaleX = 50;
+    viewer.scene.scaleY = -50;
+
+    // Add grid
+    var grid = new ROS2D.Grid({
+      size: 20,
+      cellSize: 0.5,
+      lineWidth: 0.02
+    });
+    viewer.addObject(grid);
+
+    // Add robot indicator at center
+    robotArrow = new ROS2D.NavigationArrow({
+      size: 0.5,
+      fillColor: createjs.Graphics.getRGB(255, 100, 50),
+      strokeColor: createjs.Graphics.getRGB(255, 255, 255),
+      strokeSize: 0.03
+    });
+    viewer.addObject(robotArrow);
+
+    // Create shape for laser scan
+    laserShape = new createjs.Shape();
+    viewer.addObject(laserShape);
+
+    // Start demo mode
+    startDemoMode();
+    updateStatus();
+  }
+
+  function connectToRos() {
+    if (ros) ros.close();
+
+    var url = document.getElementById('rosUrl').value;
+    ros = new ROSLIB.Ros({ url: url });
+
+    ros.on('connection', function() {
+      isRosConnected = true;
+      updateStatus();
+      startRosMode();
+    });
+
+    ros.on('error', function() {
+      isRosConnected = false;
+      updateStatus();
+    });
+
+    ros.on('close', function() {
+      isRosConnected = false;
+      updateStatus();
+    });
+  }
+
+  function startRosMode() {
+    // Clear demo animation
+    createjs.Ticker.removeAllEventListeners();
+
+    // Reset view
+    viewer.scene.x = 350;
+    viewer.scene.y = 250;
+    viewer.scene.scaleX = 50;
+    viewer.scene.scaleY = -50;
+
+    // Subscribe to laser scan
+    laserTopic = new ROSLIB.Topic({
+      ros: ros,
+      name: '/lidar/center/obstacle_scan',
+      messageType: 'sensor_msgs/LaserScan'
+    });
+
+    laserTopic.subscribe(function(msg) {
+      scanData = msg;
+      drawLaserScan(msg);
+      updateScanDisplay(msg);
+    });
+  }
+
+  function drawLaserScan(msg) {
+    if (!laserShape) return;
+
+    var graphics = laserShape.graphics;
+    graphics.clear();
+    graphics.setStrokeStyle(0.02);
+    graphics.beginStroke(createjs.Graphics.getRGB(255, 100, 100));
+
+    var angle = msg.angle_min;
+    var hasPoints = false;
+    var validCount = 0;
+    var minRange = Infinity;
+    var maxRange = 0;
+
+    for (var i = 0; i < msg.ranges.length; i++) {
+      var range = msg.ranges[i];
+      if (range < msg.range_max && range > msg.range_min && isFinite(range)) {
+        var x = Math.cos(angle) * range;
+        var y = Math.sin(angle) * range;
+
+        if (!hasPoints) {
+          graphics.moveTo(x, y);
+          hasPoints = true;
+        } else {
+          graphics.lineTo(x, y);
+        }
+
+        validCount++;
+        if (range < minRange) minRange = range;
+        if (range > maxRange) maxRange = range;
+      }
+      angle += msg.angle_increment;
+    }
+
+    graphics.endStroke();
+
+    // Update stats
+    document.getElementById('scanRays').textContent = msg.ranges.length;
+    document.getElementById('scanValid').textContent = validCount;
+    document.getElementById('scanMinRange').textContent = minRange.toFixed(2);
+    document.getElementById('scanMaxRange').textContent = maxRange.toFixed(2);
+  }
+
+  function startDemoMode() {
+    // Simulate laser scan with moving obstacles
+    var t = 0;
+
+    createjs.Ticker.addEventListener('tick', function() {
+      t += 0.02;
+
+      // Simulate scan data
+      var msg = {
+        angle_min: -Math.PI,
+        angle_max: Math.PI,
+        angle_increment: Math.PI / 180,  // 1 degree resolution
+        range_min: 0.1,
+        range_max: 10.0,
+        ranges: []
+      };
+
+      // Generate scan with some obstacles
+      for (var i = 0; i < 360; i++) {
+        var angle = i * Math.PI / 180;
+        var range = 8;
+
+        // Add some simulated obstacles
+        for (var ox = -3; ox <= 3; ox += 1.5) {
+          for (var oy = -2; oy <= 2; oy += 1) {
+            var dx = Math.cos(angle) * 8 - ox;
+            var dy = Math.sin(angle) * 8 - oy;
+            var dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist < 0.5) {
+              range = Math.sqrt(ox*ox + oy*oy) - 0.3;
+              break;
+            }
+          }
+        }
+
+        // Add some noise
+        range += (Math.random() - 0.5) * 0.1;
+        range = Math.max(0.1, Math.min(10, range));
+
+        msg.ranges.push(range);
+      }
+
+      drawLaserScan(msg);
+    });
+  }
+
+  function updateStatus() {
+    var statusDiv = document.getElementById('status');
+    if (isRosConnected) {
+      statusDiv.className = 'status connected';
+      statusDiv.textContent = 'Connected to ROS';
+    } else {
+      statusDiv.className = 'status disconnected';
+      statusDiv.textContent = 'Demo Mode';
+    }
+  }
+
+  function updateScanDisplay(msg) {
+    document.getElementById('scanAngleMin').textContent = msg.angle_min.toFixed(2);
+    document.getElementById('scanAngleMax').textContent = msg.angle_max.toFixed(2);
+    document.getElementById('scanAngleInc').textContent = msg.angle_increment.toFixed(4);
+    document.getElementById('scanRangeMin').textContent = msg.range_min.toFixed(2);
+    document.getElementById('scanRangeMax').textContent = msg.range_max.toFixed(2);
+  }
+</script>
+</head>
+
+<body onload="init()">
+  <h1>Laser Scan Visualization</h1>
+  <p>
+    Visualizes <tt>sensor_msgs/LaserScan</tt> messages from your LiDAR sensor.
+    The scan is drawn as a continuous line showing obstacle distances around the robot.
+  </p>
+
+  <div class="container">
+    <div class="panel">
+      <div style="margin-bottom:10px;">
+        <div id="status" class="status disconnected">Demo Mode</div>
+        <input type="text" id="rosUrl" value="ws://localhost:9090">
+        <button onclick="connectToRos()">Connect</button>
+      </div>
+      <div id="scan"></div>
+      <p style="margin-top:10px;font-size:12px;color:#8b949e;">
+        Red line = Laser scan | Orange arrow = Robot center
+      </p>
+    </div>
+
+    <div class="panel">
+      <h2>Scan Statistics</h2>
+      <div class="data-display">
+        <div class="data-row">
+          <span class="data-label">Total rays:</span>
+          <span class="data-value" id="scanRays">360</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">Valid readings:</span>
+          <span class="data-value" id="scanValid">-</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">Min range:</span>
+          <span class="data-value" id="scanMinRange">- m</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">Max range:</span>
+          <span class="data-value" id="scanMaxRange">- m</span>
+        </div>
+      </div>
+
+      <h2>Scan Parameters</h2>
+      <div class="data-display">
+        <div class="data-row">
+          <span class="data-label">Angle min:</span>
+          <span class="data-value" id="scanAngleMin">-3.14</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">Angle max:</span>
+          <span class="data-value" id="scanAngleMax">3.14</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">Angle increment:</span>
+          <span class="data-value" id="scanAngleInc">0.0175</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">Range min:</span>
+          <span class="data-value" id="scanRangeMin">0.10</span>
+        </div>
+        <div class="data-row">
+          <span class="data-label">Range max:</span>
+          <span class="data-value" id="scanRangeMax">10.00</span>
+        </div>
+      </div>
+
+      <h2>Topics</h2>
+      <p class="topic-list" style="font-size:11px;color:#8b949e;">
+        <code>/lidar/center/obstacle_scan</code><br>
+        <code>/lidar/center/slam_scan_filtered</code>
+      </p>
+    </div>
+  </div>
+</body>
+</html>

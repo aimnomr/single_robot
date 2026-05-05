@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Combined ROS2D.js Demo - Full Robot Capabilities</title>
+
+<script src="https://cdn.jsdelivr.net/npm/easeljs@1/lib/easeljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/eventemitter2@6/lib/eventemitter2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ros2d@0/build/ros2d.min.js"></script>
+
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #0d1117;
+    color: #c9d1d9;
+    margin: 0;
+    padding: 20px;
+  }
+  h1 { color: #58a6ff; margin-bottom: 5px; }
+  h2 { color: #7ee787; margin: 20px 0 10px 0; font-size: 16px; }
+  h3 { color: #a5d6ff; margin: 15px 0 8px 0; font-size: 14px; }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+  }
+  .container {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 20px;
+  }
+  .main-panel {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 15px;
+  }
+  .side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  .panel {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 15px;
+  }
+  .status-bar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+  }
+  .status-item {
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .status-connected { background: #238636; color: white; }
+  .status-disconnected { background: #da3633; color: white; }
+  .status-info { background: #1f6feb; color: white; }
+  .status-warning { background: #9e6a03; color: white; }
+
+  input[type="text"] {
+    width: 200px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #30363d;
+    background: #0d1117;
+    color: #c9d1d9;
+    font-size: 13px;
+  }
+  button {
+    background: #238636;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  button:hover { background: #2ea043; }
+  button.secondary { background: #1f6feb; }
+  button.secondary:hover { background: #388bfd; }
+  button.danger { background: #da3633; }
+  button.danger:hover { background: #f85149; }
+
+  .legend {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+  }
+  .legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+  .legend-line {
+    width: 20px;
+    height: 3px;
+    flex-shrink: 0;
+  }
+
+  .topic-list {
+    font-size: 11px;
+    color: #8b949e;
+  }
+  .topic-list code {
+    background: #0d1117;
+    padding: 2px 6px;
+    border-radius: 3px;
+    display: inline-block;
+    margin: 2px;
+  }
+
+  .data-display {
+    font-family: 'Consolas', monospace;
+    font-size: 12px;
+    background: #0d1117;
+    padding: 10px;
+    border-radius: 6px;
+    margin-top: 8px;
+  }
+  .data-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    border-bottom: 1px solid #21262d;
+  }
+  .data-row:last-child { border-bottom: none; }
+  .data-label { color: #8b949e; }
+  .data-value { color: #79c0ff; }
+
+  #map {
+    border: 1px solid #30363d;
+    border-radius: 4px;
+    background: #000;
+  }
+
+  .tab-container {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 10px;
+  }
+  .tab {
+    padding: 6px 12px;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 6px 6px 0 0;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .tab.active {
+    background: #161b22;
+    border-bottom-color: #161b22;
+  }
+</style>
+
+<script>
+  /**
+   * Combined ROS2D.js Demo - Full Robot Capabilities
+   *
+   * Demonstrates all available visualization tools with topics from your robot:
+   *
+   * MAP VISUALIZATION:
+   * - /reference/map (nav_msgs/OccupancyGrid) - Main occupancy grid map
+   * - /reference/map_updates (nav_msgs/OccupancyGrid) - Map updates for SLAM
+   *
+   * ROBOT POSE:
+   * - /diff_controller/odom (nav_msgs/Odometry) - Robot odometry
+   * - /tf (tf2_msgs/TFMessage) - Transform tree (fallback)
+   *
+   * LASER SCAN:
+   * - /lidar/center/obstacle_scan (sensor_msgs/LaserScan) - Obstacle detection scan
+   * - /lidar/center/slam_scan_filtered (sensor_msgs/LaserScan) - SLAM-processed scan
+   *
+   * CAMERA:
+   * - /camera/front/image_raw/compressed (sensor_msgs/CompressedImage) - Front camera feed
+   *
+   * NAVIGATION:
+   * - /move_base_node/DWAPlannerROS/global_plan (nav_msgs/Path) - Global path
+   * - /move_base_node/DWAPlannerROS/local_plan (nav_msgs/Path) - Local path
+   * - /move_base_node/DWAPlannerROS/trajectory_cloud - Trajectory visualization
+   *
+   * COSTMAPS:
+   * - /move_base_node/global_costmap/costmap (nav_msgs/OccupancyGrid)
+   * - /move_base_node/local_costmap/costmap (nav_msgs/OccupancyGrid)
+   */
+
+  var ros = null;
+  var viewer = null;
+  var gridClient = null;
+  var traceShape = null;
+  var robotArrow = null;
+  var laserScanShape = null;
+  var globalPathShape = null;
+  var localPathShape = null;
+  var isRosConnected = false;
+
+  // Subscriptions
+  var odomTopic = null;
+  var laserTopic = null;
+  var globalPlanTopic = null;
+  var localPlanTopic = null;
+  var cameraTopic = null;
+
+  // State
+  var robotPose = { x: 0, y: 0, theta: 0 };
+  var laserData = null;
+
+  function init() {
+    // Create the viewer
+    viewer = new ROS2D.Viewer({
+      divID: 'map',
+      width: 800,
+      height: 550,
+      background: '#0a0e14'
+    });
+
+    // Add pan and zoom support
+    var panView = new ROS2D.PanView({ rootObject: viewer.scene });
+    var zoomView = new ROS2D.ZoomView({ rootObject: viewer.scene, minScale: 0.001 });
+
+    // Add base grid overlay (always visible)
+    var grid = new ROS2D.Grid({
+      size: 200,
+      cellSize: 0.5,
+      lineWidth: 0.01
+    });
+    viewer.addObject(grid);
+
+    // Setup mouse interactions
+    setupInteractions(panView, zoomView);
+
+    // Initialize visualization elements
+    initVisualization();
+
+    // Start in demo mode
+    startDemoMode();
+    updateStatus();
+  }
+
+  function setupInteractions(panView, zoomView) {
+    var canvas = document.querySelector('#map canvas');
+    var isPanning = false;
+
+    canvas.addEventListener('mousedown', function(event) {
+      if (event.button === 1 || event.shiftKey) {
+        isPanning = true;
+        panView.startPan(event.offsetX, event.offsetY);
+      }
+    });
+
+    canvas.addEventListener('mousemove', function(event) {
+      if (isPanning) {
+        panView.pan(event.offsetX, event.offsetY);
+      }
+    });
+
+    canvas.addEventListener('mouseup', function() {
+      isPanning = false;
+    });
+
+    canvas.addEventListener('mouseleave', function() {
+      isPanning = false;
+    });
+
+    canvas.addEventListener('wheel', function(event) {
+      event.preventDefault();
+      var zoomFactor = event.deltaY > 0 ? 0.9 : 1.1;
+      zoomView.startZoom(event.offsetX, event.offsetY);
+      zoomView.zoom(zoomFactor);
+    });
+
+    // Touch support
+    var isTouchPanning = false;
+    canvas.addEventListener('touchstart', function(event) {
+      if (event.touches.length === 1) {
+        isTouchPanning = true;
+        var touch = event.touches[0];
+        panView.startPan(touch.clientX - canvas.offsetLeft, touch.clientY - canvas.offsetTop);
+      }
+      event.preventDefault();
+    });
+
+    canvas.addEventListener('touchmove', function(event) {
+      if (isTouchPanning && event.touches.length === 1) {
+        var touch = event.touches[0];
+        panView.pan(touch.clientX - canvas.offsetLeft, touch.clientY - canvas.offsetTop);
+      }
+      event.preventDefault();
+    });
+
+    canvas.addEventListener('touchend', function() {
+      isTouchPanning = false;
+    });
+  }
+
+  function initVisualization() {
+    // Clear existing children
+    viewer.scene.removeAllChildren();
+
+    // Re-add grid
+    var grid = new ROS2D.Grid({ size: 200, cellSize: 0.5, lineWidth: 0.01 });
+    viewer.addObject(grid);
+
+    // TraceShape for robot path history
+    traceShape = new ROS2D.TraceShape({
+      strokeSize: 0.05,
+      strokeColor: createjs.Graphics.getRGB(100, 200, 255),
+      maxPoses: 500,
+      minDist: 0.03
+    });
+    viewer.addObject(traceShape);
+
+    // NavigationArrow for robot orientation
+    robotArrow = new ROS2D.NavigationArrow({
+      size: 1.0,
+      fillColor: createjs.Graphics.getRGB(255, 100, 50),
+      strokeColor: createjs.Graphics.getRGB(255, 255, 255),
+      strokeSize: 0.05
+    });
+    viewer.addObject(robotArrow);
+
+    // PathShape for global plan
+    globalPathShape = new ROS2D.PathShape({
+      strokeSize: 0.08,
+      strokeColor: createjs.Graphics.getRGB(50, 255, 50)
+    });
+    viewer.addObject(globalPathShape);
+
+    // PathShape for local plan
+    localPathShape = new ROS2D.PathShape({
+      strokeSize: 0.06,
+      strokeColor: createjs.Graphics.getRGB(255, 255, 50)
+    });
+    viewer.addObject(localPathShape);
+
+    // Shape for laser scan visualization
+    laserScanShape = new createjs.Shape();
+    viewer.addObject(laserScanShape);
+  }
+
+  function connectToRos() {
+    if (ros) {
+      ros.close();
+    }
+
+    var url = document.getElementById('rosUrl').value;
+    ros = new ROSLIB.Ros({ url: url });
+
+    ros.on('connection', function() {
+      isRosConnected = true;
+      updateStatus();
+      startRosMode(ros);
+    });
+
+    ros.on('error', function() {
+      isRosConnected = false;
+      updateStatus();
+      showNotification('Failed to connect to ROS', 'error');
+    });
+
+    ros.on('close', function() {
+      isRosConnected = false;
+      updateStatus();
+    });
+  }
+
+  function startRosMode(ros) {
+    // Initialize visualization layers
+    initVisualization();
+
+    // 1. Setup map client (continuous for SLAM)
+    gridClient = new ROS2D.OccupancyGridClient({
+      ros: ros,
+      rootObject: viewer.scene,
+      topic: '/reference/map',
+      continuous: true
+    });
+
+    gridClient.on('change', function() {
+      if (gridClient.currentGrid) {
+        viewer.scaleToDimensions(
+          gridClient.currentGrid.width,
+          gridClient.currentGrid.height
+        );
+        viewer.shift(
+          gridClient.currentGrid.pose.position.x,
+          gridClient.currentGrid.pose.position.y
+        );
+      }
+    });
+
+    // 2. Subscribe to odometry
+    odomTopic = new ROSLIB.Topic({
+      ros: ros,
+      name: '/diff_controller/odom',
+      messageType: 'nav_msgs/Odometry'
+    });
+
+    odomTopic.subscribe(function(msg) {
+      var pos = msg.pose.pose.position;
+      var orient = msg.pose.pose.orientation;
+
+      robotPose = {
+        x: pos.x,
+        y: pos.y,
+        theta: quaternionToYaw(orient)
+      };
+
+      // Update robot arrow
+      robotArrow.x = pos.x;
+      robotArrow.y = pos.y;
+      robotArrow.rotation = -robotPose.theta * 180 / Math.PI;
+
+      // Add to trace
+      traceShape.addPose({ position: { x: pos.x, y: pos.y, z: 0 } });
+
+      // Update data display
+      updateOdometryDisplay(pos, orient);
+    });
+
+    // 3. Subscribe to laser scan
+    laserTopic = new ROSLIB.Topic({
+      ros: ros,
+      name: '/lidar/center/obstacle_scan',
+      messageType: 'sensor_msgs/LaserScan'
+    });
+
+    laserTopic.subscribe(function(msg) {
+      drawLaserScan(msg);
+    });
+
+    // 4. Subscribe to global plan
+    globalPlanTopic = new ROSLIB.Topic({
+      ros: ros,
+      name: '/move_base_node/DWAPlannerROS/global_plan',
+      messageType: 'nav_msgs/Path'
+    });
+
+    globalPlanTopic.subscribe(function(msg) {
+      if (msg.poses && msg.poses.length > 0) {
+        globalPathShape.setPath(msg);
+      }
+    });
+
+    // 5. Subscribe to local plan
+    localPlanTopic = new ROSLIB.Topic({
+      ros: ros,
+      name: '/move_base_node/DWAPlannerROS/local_plan',
+      messageType: 'nav_msgs/Path'
+    });
+
+    localPlanTopic.subscribe(function(msg) {
+      if (msg.poses && msg.poses.length > 0) {
+        localPathShape.setPath(msg);
+      }
+    });
+
+    // 6. Subscribe to camera (for image display in panel)
+    cameraTopic = new ROSLIB.Topic({
+      ros: ros,
+      name: '/camera/front/image_raw/compressed',
+      messageType: 'sensor_msgs/CompressedImage'
+    });
+
+    cameraTopic.subscribe(function(msg) {
+      if (msg.format && msg.data) {
+        var imgType = msg.format.indexOf('png') >= 0 ? 'png' : 'jpeg';
+        var base64 = arrayBufferToBase64(msg.data);
+        document.getElementById('cameraFeed').src = 'data:image/' + imgType + ';base64,' + base64;
+      }
+    });
+  }
+
+  function drawLaserScan(msg) {
+    if (!laserScanShape) return;
+
+    var graphics = laserScanShape.graphics;
+    graphics.clear();
+    graphics.setStrokeStyle(0.03);
+    graphics.beginStroke(createjs.Graphics.getRGB(255, 100, 100));
+
+    var angle = msg.angle_min;
+    var hasPoints = false;
+
+    for (var i = 0; i < msg.ranges.length; i++) {
+      var range = msg.ranges[i];
+      if (range < msg.range_max && range > msg.range_min && isFinite(range)) {
+        var x = Math.cos(angle) * range;
+        var y = Math.sin(angle) * range;
+
+        if (!hasPoints) {
+          graphics.moveTo(x, y);
+          hasPoints = true;
+        } else {
+          graphics.lineTo(x, y);
+        }
+      }
+      angle += msg.angle_increment;
+    }
+
+    graphics.endStroke();
+  }
+
+  function quaternionToYaw(q) {
+    // Convert quaternion to yaw angle
+    var q0 = q.w, q1 = q.x, q2 = q.y, q3 = q.z;
+    return Math.atan2(2 * (q0 * q3 + q1 * q2), 1 - 2 * (q2 * q2 + q3 * q3));
+  }
+
+  function arrayBufferToBase64(buffer) {
+    // Handle both array and string data formats
+    if (typeof buffer === 'string') {
+      return buffer;
+    }
+    var binary = '';
+    var bytes = new Uint8Array(buffer);
+    var len = bytes.byteLength;
+    for (var i = 0; i < len; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return window.btoa(binary);
+  }
+
+  function startDemoMode() {
+    // Simulate robot movement in a complex pattern
+    var t = 0;
+    var centerX = 0;
+    var centerY = 0;
+
+    createjs.Ticker.addEventListener('tick', function() {
+      t += 0.015;
+
+      // Figure-8 pattern with variation
+      var x = centerX + 4 * Math.sin(t);
+      var y = centerY + 2 * Math.sin(2 * t);
+
+      // Calculate orientation
+      var dx = 4 * Math.cos(t);
+      var dy = 4 * Math.cos(2 * t);
+      var angle = Math.atan2(dy, dx);
+
+      robotPose = { x: x, y: y, theta: angle };
+
+      robotArrow.x = x;
+      robotArrow.y = y;
+      robotArrow.rotation = -angle * 180 / Math.PI;
+
+      traceShape.addPose({ position: { x: x, y: y, z: 0 } });
+
+      // Simulate laser scan (static environment)
+      simulateLaserScan(x, y, angle);
+
+      // Simulate global path
+      simulateGlobalPath(t);
+
+      // Update displays
+      updateOdometryDisplay(
+        { x: x, y: y, z: 0 },
+        { x: 0, y: 0, z: Math.sin(angle/2), w: Math.cos(angle/2) }
+      );
+    });
+  }
+
+  function simulateLaserScan(x, y, theta) {
+    if (!laserScanShape) return;
+
+    var graphics = laserScanShape.graphics;
+    graphics.clear();
+    graphics.setStrokeStyle(0.03);
+    graphics.beginStroke(createjs.Graphics.getRGB(255, 100, 100));
+
+    var numRays = 360;
+    var angleMin = -Math.PI;
+    var angleMax = Math.PI;
+    var angleInc = (angleMax - angleMin) / numRays;
+
+    for (var i = 0; i < numRays; i++) {
+      var angle = angleMin + i * angleInc - theta;
+      var range = 5;
+
+      // Simulate some obstacles
+      for (var ox = -5; ox <= 5; ox += 2) {
+        for (var oy = -3; oy <= 3; oy += 2) {
+          var dx = (x + Math.cos(angle) * range) - ox;
+          var dy = (y + Math.sin(angle) * range) - oy;
+          if (Math.sqrt(dx*dx + dy*dy) < 0.3) {
+            range = Math.sqrt(ox*ox + oy*oy) - 0.5;
+            break;
+          }
+        }
+      }
+
+      var rayX = Math.cos(angle + theta) * range;
+      var rayY = Math.sin(angle + theta) * range;
+
+      if (i === 0) {
+        graphics.moveTo(rayX, rayY);
+      } else {
+        graphics.lineTo(rayX, rayY);
+      }
+    }
+
+    graphics.endStroke();
+  }
+
+  function simulateGlobalPath(t) {
+    var path = { poses: [] };
+    for (var i = 0; i < 30; i++) {
+      var pt = i * 0.2;
+      path.poses.push({
+        pose: {
+          position: {
+            x: robotPose.x + pt * Math.cos(robotPose.theta),
+            y: robotPose.y + pt * Math.sin(robotPose.theta),
+            z: 0
+          }
+        }
+      });
+    }
+    globalPathShape.setPath(path);
+  }
+
+  function updateStatus() {
+    var statusDiv = document.getElementById('status');
+    if (isRosConnected) {
+      statusDiv.innerHTML = '<span class="status-item status-connected">Connected to ROS</span>';
+    } else {
+      statusDiv.innerHTML = '<span class="status-item status-disconnected">Demo Mode (Disconnected)</span>';
+    }
+  }
+
+  function updateOdometryDisplay(pos, orient) {
+    var yaw = quaternionToYaw(orient) * 180 / Math.PI;
+    document.getElementById('odomX').textContent = pos.x.toFixed(3);
+    document.getElementById('odomY').textContent = pos.y.toFixed(3);
+    document.getElementById('odomYaw').textContent = yaw.toFixed(1) + '°';
+  }
+
+  function showNotification(message, type) {
+    var notif = document.createElement('div');
+    notif.style.cssText = 'position:fixed;top:20px;right:20px;padding:12px 20px;border-radius:6px;background:' +
+      (type === 'error' ? '#da3633' : '#238636') + ';color:white;z-index:1000;';
+    notif.textContent = message;
+    document.body.appendChild(notif);
+    setTimeout(function() { notif.remove(); }, 3000);
+  }
+
+  function clearTrace() {
+    if (traceShape) {
+      traceShape.graphics.clear();
+      traceShape.graphics.setStrokeStyle(traceShape.strokeSize);
+      traceShape.graphics.beginStroke(traceShape.strokeColor);
+      traceShape.poses = [];
+    }
+  }
+
+  function resetView() {
+    if (gridClient && gridClient.currentGrid) {
+      viewer.scaleToDimensions(gridClient.currentGrid.width, gridClient.currentGrid.height);
+      viewer.shift(gridClient.currentGrid.pose.position.x, gridClient.currentGrid.pose.position.y);
+    } else {
+      viewer.scene.x = 400;
+      viewer.scene.y = 275;
+      viewer.scene.scaleX = 40;
+      viewer.scene.scaleY = -40;
+    }
+  }
+</script>
+</head>
+
+<body onload="init()">
+  <div class="header">
+    <div>
+      <h1>Combined ROS2D.js Demo</h1>
+      <p style="color:#8b949e;margin:0;">Full robot capabilities visualization - Map, Odometry, Laser Scan, Paths</p>
+    </div>
+    <div style="text-align:right;">
+      <div id="status"><span class="status-item status-disconnected">Demo Mode</span></div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="main-panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div>
+          <input type="text" id="rosUrl" value="ws://localhost:9090" placeholder="ROS Bridge URL">
+          <button onclick="connectToRos()">Connect</button>
+          <button class="secondary" onclick="resetView()">Reset View</button>
+          <button class="danger" onclick="clearTrace()">Clear Trace</button>
+        </div>
+        <div style="font-size:12px;color:#8b949e;">
+          Mouse: Wheel zoom | Shift-drag pan | Touch: drag pan
+        </div>
+      </div>
+      <div id="map"></div>
+    </div>
+
+    <div class="side-panel">
+      <!-- Legend Panel -->
+      <div class="panel">
+        <h2>Legend</h2>
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-line" style="background:#64c8ff;"></div>
+            <span>Robot trace</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-line" style="background:#ff6432;"></div>
+            <span>Robot orientation</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-line" style="background:#ff6464;"></div>
+            <span>Laser scan</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-line" style="background:#32ff32;"></div>
+            <span>Global plan</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-line" style="background:#ffff32;"></div>
+            <span>Local plan</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background:#30363d;border:1px solid #8b949e;"></div>
+            <span>Grid (0.5m)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Odometry Display -->
+      <div class="panel">
+        <h2>Robot Odometry</h2>
+        <p class="topic-list">Topic: <code>/diff_controller/odom</code></p>
+        <div class="data-display">
+          <div class="data-row">
+            <span class="data-label">Position X:</span>
+            <span class="data-value" id="odomX">0.000</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">Position Y:</span>
+            <span class="data-value" id="odomY">0.000</span>
+          </div>
+          <div class="data-row">
+            <span class="data-label">Yaw:</span>
+            <span class="data-value" id="odomYaw">0°</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Camera Feed -->
+      <div class="panel">
+        <h2>Camera Feed</h2>
+        <p class="topic-list">Topic: <code>/camera/front/image_raw/compressed</code></p>
+        <img id="cameraFeed" src="" alt="No image" style="width:100%;border-radius:4px;background:#0d1117;min-height:150px;object-fit:cover;">
+      </div>
+
+      <!-- Active Topics -->
+      <div class="panel">
+        <h2>Subscribed Topics</h2>
+        <div class="topic-list">
+          <code>/reference/map</code><br>
+          <code>/diff_controller/odom</code><br>
+          <code>/lidar/center/obstacle_scan</code><br>
+          <code>/move_base_node/DWAPlannerROS/global_plan</code><br>
+          <code>/move_base_node/DWAPlannerROS/local_plan</code><br>
+          <code>/camera/front/image_raw/compressed</code>
+        </div>
+      </div>
+
+      <!-- Features Summary -->
+      <div class="panel">
+        <h2>Visualization Components</h2>
+        <ul style="font-size:12px;margin:0;padding-left:18px;">
+          <li><strong>Viewer</strong> - Canvas renderer</li>
+          <li><strong>PanView/ZoomView</strong> - Navigation</li>
+          <li><strong>Grid</strong> - Coordinate overlay</li>
+          <li><strong>OccupancyGridClient</strong> - Map display</li>
+          <li><strong>NavigationArrow</strong> - Robot marker</li>
+          <li><strong>TraceShape</strong> - Path history</li>
+          <li><strong>PathShape</strong> - Plan visualization</li>
+          <li><strong>Custom Shape</strong> - Laser scan</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

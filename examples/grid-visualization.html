@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Grid Visualization - ROS2D.js</title>
+
+<script src="https://cdn.jsdelivr.net/npm/easeljs@1/lib/easeljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/eventemitter2@6/lib/eventemitter2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ros2d@0/build/ros2d.min.js"></script>
+
+<script>
+  /**
+   * Grid Visualization Example
+   *
+   * Demonstrates the Grid overlay for coordinate reference.
+   * Grid can be used standalone or as an overlay on maps.
+   *
+   * Use case: Providing visual scale reference, coordinate system
+   * visualization, or map overlay.
+   */
+  function init() {
+    // Create viewer
+    var viewer = new ROS2D.Viewer({
+      divID : 'grid',
+      width : 640,
+      height : 480,
+      background : '#1a1a2e'
+    });
+
+    // Center the view
+    viewer.scene.x = 320;
+    viewer.scene.y = 240;
+    viewer.scene.scaleX = 30;
+    viewer.scene.scaleY = -30;
+
+    // Add a large grid as background reference
+    var largeGrid = new ROS2D.Grid({
+      size : 50,          // 50 cells in each direction
+      cellSize : 1.0,     // 1 meter per cell
+      lineWidth : 0.01    // Thin lines
+    });
+    viewer.addObject(largeGrid);
+
+    // Add a finer grid overlay
+    var fineGrid = new ROS2D.Grid({
+      size : 50,
+      cellSize : 0.2,     // 20cm per cell
+      lineWidth : 0.005   // Even thinner lines
+    });
+    viewer.addObject(fineGrid);
+
+    // Add axis indicators (X in red, Y in green)
+    var xAxis = new ROS2D.Grid({
+      size : 5,
+      cellSize : 1.0,
+      lineWidth : 0.05
+    });
+    // The Grid draws both X and Y axes, we'll use it as-is
+
+    // Add origin label
+    var originLabel = new createjs.Text("Origin (0,0)", "bold 14px Arial", "#FFFFFF");
+    originLabel.x = 10;
+    originLabel.y = -20;
+    viewer.addObject(originLabel);
+
+    // Add axis labels
+    var xLabel = new createjs.Text("+X", "bold 16px Arial", "#FF4444");
+    xLabel.x = 140;
+    xLabel.y = -10;
+    viewer.addObject(xLabel);
+
+    var yLabel = new createjs.Text("+Y", "bold 16px Arial", "#44FF44");
+    yLabel.x = 10;
+    yLabel.y = -130;
+    viewer.addObject(yLabel);
+
+    // Add scale indicators
+    var scale1m = new createjs.Text("1m grid (white)", "10px Arial", "#AAAAAA");
+    scale1m.x = -100;
+    scale1m.y = 100;
+    viewer.addObject(scale1m);
+
+    var scale20cm = new createjs.Text("20cm grid (light blue)", "10px Arial", "#6666FF");
+    scale20cm.x = -100;
+    scale20cm.y = 115;
+    viewer.addObject(scale20cm);
+  }
+</script>
+</head>
+
+<body onload="init()">
+  <h1>Grid Visualization</h1>
+  <p>
+    The <tt>Grid</tt> component provides a coordinate reference overlay.
+    Multiple grids can be layered for different scales.
+  </p>
+  <h2>Parameters</h2>
+  <ul>
+    <li><strong>size</strong>: Number of cells in each direction from origin</li>
+    <li><strong>cellSize</strong>: Size of each cell in meters</li>
+    <li><strong>lineWidth</strong>: Thickness of grid lines</li>
+  </ul>
+  <h2>Use Cases</h2>
+  <ul>
+    <li>Reference overlay on occupancy grid maps</li>
+    <li>Visual scale reference in RViz-like displays</li>
+    <li>Coordinate system demonstration</li>
+    <li>Measuring distances visually</li>
+  </ul>
+  <p>
+    In this example, two grids are layered: a 1-meter grid for coarse reference
+    and a 20-centimeter grid for fine positioning.
+  </p>
+  <div id="grid"></div>
+</body>
+</html>

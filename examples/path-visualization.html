@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Path Visualization - ROS2D.js</title>
+
+<script src="https://cdn.jsdelivr.net/npm/easeljs@1/lib/easeljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/eventemitter2@6/lib/eventemitter2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ros2d@0/build/ros2d.min.js"></script>
+
+<script>
+  /**
+   * Path Visualization Example
+   *
+   * Demonstrates PathShape for visualizing nav_msgs/Path messages.
+   * Also shows TraceShape for robot path history.
+   *
+   * Use case: Visualizing planned paths from navigation stack,
+   * or showing where a robot has traveled.
+   */
+  function init() {
+    // Create viewer
+    var viewer = new ROS2D.Viewer({
+      divID : 'path',
+      width : 640,
+      height : 480,
+      background : '#0d1117'
+    });
+
+    // Center and scale the view
+    viewer.scene.x = 50;
+    viewer.scene.y = 400;
+    viewer.scene.scaleX = 40;
+    viewer.scene.scaleY = -40;
+
+    // Add a grid for reference
+    var grid = new ROS2D.Grid({
+      size : 20,
+      cellSize : 0.5,
+      lineWidth : 0.02
+    });
+    viewer.addObject(grid);
+
+    // Create a PathShape for planned path visualization
+    // In real use, this would subscribe to a ROS topic
+    var pathShape = new ROS2D.PathShape({
+      strokeSize : 0.1,
+      strokeColor : createjs.Graphics.getRGB(0, 255, 0)
+    });
+
+    // Simulate a planned path (nav_msgs/Path format)
+    var simulatedPath = {
+      poses: []
+    };
+    for (var i = 0; i < 20; i++) {
+      simulatedPath.poses.push({
+        pose: {
+          position: {
+            x: i * 0.3,
+            y: Math.sin(i * 0.5) * 2,
+            z: 0
+          }
+        }
+      });
+    }
+    pathShape.setPath(simulatedPath);
+    viewer.addObject(pathShape);
+
+    // Create a TraceShape for robot history
+    var traceShape = new ROS2D.TraceShape({
+      strokeSize : 0.15,
+      strokeColor : createjs.Graphics.getRGB(255, 100, 100),
+      maxPoses : 100,
+      minDist : 0.02
+    });
+    viewer.addObject(traceShape);
+
+    // Simulate robot movement with trace
+    var robotPose = { position: { x: 0, y: 0, z: 0 } };
+    var t = 0;
+    createjs.Ticker.addEventListener('tick', function() {
+      t += 0.05;
+      robotPose.position.x = t * 0.5;
+      robotPose.position.y = Math.cos(t) * 1.5;
+      traceShape.addPose({ position: { x: robotPose.position.x, y: robotPose.position.y, z: 0 } });
+    });
+
+    // Add labels
+    var label1 = new createjs.Text("PathShape (green) - Planned path", "12px Arial", "#00FF00");
+    label1.x = 100;
+    label1.y = -50;
+    viewer.addObject(label1);
+
+    var label2 = new createjs.Text("TraceShape (red) - Robot history", "12px Arial", "#FF6464");
+    label2.x = 100;
+    label2.y = -30;
+    viewer.addObject(label2);
+  }
+</script>
+</head>
+
+<body onload="init()">
+  <h1>Path Visualization</h1>
+  <p>
+    Demonstrates two path visualization types:
+  </p>
+  <h2>PathShape (Green)</h2>
+  <p>
+    Visualizes a <tt>nav_msgs/Path</tt> message. Used for:
+  </p>
+  <ul>
+    <li>Global planner paths from <tt>/move_base/NavfnROS/plan</tt></li>
+    <li>Local planner paths from <tt>/move_base/DWAPlannerROS/local_plan</tt></li>
+    <li>Any pre-computed path visualization</li>
+  </ul>
+
+  <h2>TraceShape (Red)</h2>
+  <p>
+    Records and displays robot position history. Used for:
+  </p>
+  <ul>
+    <li>Visualizing where a robot has traveled</li>
+    <li>Odometry drift visualization</li>
+    <li>SLAM trajectory display</li>
+  </ul>
+  <p>
+    The trace automatically removes old points when <tt>maxPoses</tt> is reached,
+    and only adds points when the robot moves more than <tt>minDist</tt>.
+  </p>
+  <div id="path"></div>
+</body>
+</html>

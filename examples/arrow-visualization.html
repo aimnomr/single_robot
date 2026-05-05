@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Arrow Visualization - ROS2D.js</title>
+
+<script src="https://cdn.jsdelivr.net/npm/easeljs@1/lib/easeljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/eventemitter2@6/lib/eventemitter2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ros2d@0/build/ros2d.min.js"></script>
+
+<script>
+  /**
+   * Arrow Visualization Example
+   *
+   * Demonstrates ArrowShape and NavigationArrow markers.
+   * - ArrowShape: Simple arrow with line shaft and triangular head
+   * - NavigationArrow: Filled triangle arrow for orientation display
+   *
+   * Use case: Visualizing robot orientation, goal directions, or vectors.
+   */
+  function init() {
+    // Create viewer without ROS connection (static demo)
+    var viewer = new ROS2D.Viewer({
+      divID : 'arrows',
+      width : 640,
+      height : 480,
+      background : '#222222'
+    });
+
+    // Center the view
+    viewer.scene.x = 320;
+    viewer.scene.y = 240;
+    viewer.scene.scaleX = 20;
+    viewer.scene.scaleY = -20;  // Flip Y for ROS coordinates
+
+    // Create an ArrowShape (outlined arrow with shaft)
+    var arrowShape = new ROS2D.ArrowShape({
+      size : 5,
+      strokeSize : 0.3,
+      strokeColor : createjs.Graphics.getRGB(255, 255, 255),
+      fillColor : createjs.Graphics.getRGB(0, 100, 255),
+      pulse : true  // Animate the arrow
+    });
+    arrowShape.x = -5;
+    arrowShape.y = 2;
+    arrowShape.rotation = 0;
+    viewer.addObject(arrowShape);
+
+    // Create a NavigationArrow (filled triangle)
+    var navArrow = new ROS2D.NavigationArrow({
+      size : 5,
+      strokeSize : 0.3,
+      strokeColor : createjs.Graphics.getRGB(255, 255, 0),
+      fillColor : createjs.Graphics.getRGB(255, 100, 0),
+      pulse : false
+    });
+    navArrow.x = 5;
+    navArrow.y = 2;
+    navArrow.rotation = 90;
+    viewer.addObject(navArrow);
+
+    // Add labels using createjs.Text
+    var label1 = new createjs.Text("ArrowShape", "12px Arial", "#FFFFFF");
+    label1.x = -80;
+    label1.y = -60;
+    viewer.addObject(label1);
+
+    var label2 = new createjs.Text("NavigationArrow", "12px Arial", "#FFFF00");
+    label2.x = 60;
+    label2.y = -60;
+    viewer.addObject(label2);
+
+    // Animate rotation to demonstrate orientation
+    var angle = 0;
+    createjs.Ticker.addEventListener('tick', function() {
+      angle += 2;
+      arrowShape.rotation = angle;
+      navArrow.rotation = angle + 90;
+    });
+  }
+</script>
+</head>
+
+<body onload="init()">
+  <h1>Arrow Visualization</h1>
+  <p>
+    Demonstrates two arrow marker types:
+  </p>
+  <ul>
+    <li><strong>ArrowShape</strong> (left, blue): Arrow with line shaft and triangular head.
+        White outline, pulses to show animation capability.</li>
+    <li><strong>NavigationArrow</strong> (right, orange): Filled triangle arrow.
+        Commonly used to show robot orientation.</li>
+  </ul>
+  <p>
+    Both arrows rotate to demonstrate how orientation is controlled via the
+    <tt>rotation</tt> property (in degrees, clockwise).
+  </p>
+  <h2>Use Cases</h2>
+  <ul>
+    <li>Visualizing robot heading from <tt>/amcl_pose</tt> or <tt>/odom</tt></li>
+    <li>Showing goal orientation for navigation</li>
+    <li>Displaying velocity vectors or flow fields</li>
+  </ul>
+  <div id="arrows"></div>
+</body>
+</html>

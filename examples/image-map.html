@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Image Map Example - ROS2D.js</title>
+
+<script src="https://cdn.jsdelivr.net/npm/easeljs@1/lib/easeljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/eventemitter2@6/lib/eventemitter2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ros2d@0/build/ros2d.min.js"></script>
+
+<script>
+  /**
+   * Image Map Example - Displays a PNG image as a map
+   *
+   * Unlike OccupancyGrid which receives map data as a grid message,
+   * ImageMap loads a pre-rendered PNG image and scales it to fit
+   * the map dimensions received from /map_metadata topic.
+   *
+   * Use case: When you have a pre-made map image (e.g., floor plan)
+   * rather than a ROS occupancy grid.
+   */
+  function init() {
+    // Connect to ROS
+    var ros = new ROSLIB.Ros({
+      url : 'ws://localhost:9090'
+    });
+
+    // Create the main viewer
+    var viewer = new ROS2D.Viewer({
+      divID : 'map',
+      width : 640,
+      height : 480
+    });
+
+    // Setup the image map client
+    // Requires: /map_metadata topic with map dimensions and resolution
+    var imageMapClient = new ROS2D.ImageMapClient({
+      ros : ros,
+      rootObject : viewer.scene,
+      topic : '/map_metadata',
+      // Replace with your map image URL
+      image : 'https://github.com/RobotWebTools/ros2djs/raw/develop/examples/media/map.png'
+    });
+
+    // Scale the canvas to fit the map when loaded
+    imageMapClient.on('change', function() {
+      viewer.scaleToDimensions(
+        imageMapClient.currentImage.width,
+        imageMapClient.currentImage.height
+      );
+      viewer.shift(
+        imageMapClient.currentImage.pose.position.x,
+        imageMapClient.currentImage.pose.position.y
+      );
+    });
+  }
+</script>
+</head>
+
+<body onload="init()">
+  <h1>Image Map Example</h1>
+  <p>
+    Displays a PNG image as a map. The image is scaled to fit the dimensions
+    received from the <tt>/map_metadata</tt> topic.
+  </p>
+  <h2>Requirements</h2>
+  <ol>
+    <li><tt>roscore</tt></li>
+    <li>A node publishing to <tt>/map_metadata</tt> (nav_msgs/MapMetaData)</li>
+    <li><tt>roslaunch rosbridge_server rosbridge_websocket.launch</tt></li>
+  </ol>
+  <h2>Example: Publishing map metadata</h2>
+  <pre>
+rostopic pub /map_metadata nav_msgs/MapMetaData '{
+  resolution: 0.05,
+  width: 1024,
+  height: 1024,
+  origin: {
+    position: { x: -25.6, y: -25.6, z: 0 },
+    orientation: { x: 0, y: 0, z: 0, w: 1 }
+  }
+}'</pre>
+  <div id="map"></div>
+</body>
+</html>
