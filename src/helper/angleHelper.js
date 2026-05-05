@@ -1,6 +1,5 @@
 export function quaternionToEuler(q) {
   const { x, y, z, w } = q;
-
   // Roll (rotation around X-axis)
   const sinr_cosp = 2 * (w * x + y * z);
   const cosr_cosp = 1 - 2 * (x * x + y * y);

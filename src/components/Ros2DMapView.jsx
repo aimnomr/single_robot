@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRos } from '../hooks/ROS/useRos'
+import { useDWAPlanner } from '../hooks/ROS/useDWAPlanner'
+import { quaternionToEuler } from "../helper/angleHelper"
+import { useOdometry } from '../hooks/ROS/useOdom'
 
 /**
  * Ros2dMapView - Map visualization component using ros2djs
@@ -16,12 +19,17 @@ export default function Ros2dMapView({ className = '' }) {
     const { ros } = useRos()
     const containerRef = useRef(null)
     const [error, setError] = useState(null)
+    const paths = useDWAPlanner()
+    const robotPose = useOdometry()
 
     // Store refs for cleanup
     const viewerRef = useRef(null)
     const gridClientRef = useRef(null)
+    const pathShapeRef = useRef(null)
+    const navArrowRef = useRef(null)
 
     useEffect(() => {
+
         if (!ros || !containerRef.current) return
 
         let isMounted = true
@@ -36,16 +44,14 @@ export default function Ros2dMapView({ className = '' }) {
                 width: 480,
                 height: 480,
             })
+            viewerRef.current = viewer
 
-            // Setup the map client with continuous updates
             const gridClient = new ROS2D.OccupancyGridClient({
                 ros: ros,
                 rootObject: viewer.scene,
                 continuous: true,
                 topic: '/reference/map'
             })
-
-            viewerRef.current = viewer
             gridClientRef.current = gridClient
 
             gridClient.on('change', function () {
@@ -59,6 +65,24 @@ export default function Ros2dMapView({ className = '' }) {
                     gridClient.currentGrid.pose.position.y
                 )
             })
+
+            const pathShape = new ROS2D.PathShape({
+                strokeSize: 0.05,
+                strokeColor: createjs.Graphics.getRGB(255, 100, 100),
+            });
+            pathShapeRef.current = pathShape
+            viewer.addObject(pathShape)
+
+            const navArrow = new ROS2D.ArrowShape({
+                size: 0.25,
+                strokeSize: 0.1,
+                // strokeColor: createjs.Graphics.getRGB(255, 255, 0),
+                fillColor: createjs.Graphics.getRGB(0, 100, 255),
+            });
+            navArrowRef.current = navArrow
+            viewer.addObject(navArrow)
+
+
 
             gridClient.on('error', function (err) {
                 console.error('ros2d map error:', err)
@@ -87,6 +111,18 @@ export default function Ros2dMapView({ className = '' }) {
             }
         }
     }, [ros])
+
+    useEffect(() => {
+        if (!navArrowRef.current || !robotPose) return
+        navArrowRef.current.x = robotPose.position.x
+        navArrowRef.current.y = -robotPose.position.y
+        navArrowRef.current.rotation = -quaternionToEuler(robotPose.orientation).z.toFixed(2)
+    }, [robotPose])
+
+    useEffect(() => {
+        if (!pathShapeRef.current || !paths?.poses?.length) return
+        pathShapeRef.current.setPath(paths)
+    }, [paths])
 
     if (error) {
         return (
