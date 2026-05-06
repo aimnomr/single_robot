@@ -17,4 +17,10 @@ export const mockLocationList = [
     position: { x: -2.69, y: -1.583 },
     angle: { x: 0, y: 0, z: 142.161 },
   },
+  {
+    id: 4,
+    name: 'Home',
+    position: { x: 0, y: 0 },
+    angle: { x: 0, y: 0, z: 0 },
+  },
 ]
