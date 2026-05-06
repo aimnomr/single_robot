@@ -30,6 +30,7 @@
 /lidar/center/slam_voxel_grid
 /move_base/cancel
 /move_base/goal
+/move_base_node/DWAPlannerROS/global_plan
 /move_base_node/DWAPlannerROS/local_plan
 /move_base_node/NavfnROS/plan
 /move_base_node/global_costmap/footprint
@@ -38,6 +39,7 @@
 /navigation/cmd_vel
 /reference/map
 /reference/map_updates
+/robot_pose_ekf_node/odom_combined
 /rosout
 /rqt_teleop/cmd_vel
 /safety/costmap/enable

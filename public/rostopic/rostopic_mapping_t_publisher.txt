@@ -59,6 +59,7 @@
 /lidar/center/slam_voxel_grid/parameter_descriptions
 /lidar/center/slam_voxel_grid/parameter_updates
 /map_metadata
+/move_base/cancel
 /move_base/feedback
 /move_base/goal
 /move_base/recovery_status
