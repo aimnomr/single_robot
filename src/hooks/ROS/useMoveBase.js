@@ -51,6 +51,7 @@ export function useMoveBase() {
         console.info(`[useMoveBase] ${goalId} → pos(${point.x}, ${point.y}) orient:`, qAngle)
 
         const goal = new ROSLIB.Goal({
+
             actionClient: actionClientRef.current,
             goalMessage: {
                 target_pose: {
@@ -82,7 +83,7 @@ export function useMoveBase() {
         })
 
         goal.send()
-        return () => goal.cancel()
+        return goal     // caller reads goal.goalID to match against /move_base/result
     }
 
     function cancelAll() {

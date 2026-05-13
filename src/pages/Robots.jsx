@@ -6,6 +6,7 @@ import RobotView from '../components/RobotView'
 import AMCLPoseView from '../components/AMCLPoseView'
 import SkeletonRobot from '../components/SkeletonRobot'
 import GoalSelector from '../components/GoalSelector'
+import WaypointNav from '../components/WaypointNav'
 
 // Toggle between map implementations:
 const USE_ROS2D = true  // Set to true to use Ros2dMapView instead of MapView
@@ -31,6 +32,7 @@ function Robots() {
                         </div>
                         <div className='flex flex-row divide-x jus divide-white/5 mt-5'>
                             <RobotControl />
+                            <WaypointNav />
                         </div>
                     </div>
                 </main>
