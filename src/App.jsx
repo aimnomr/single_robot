@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
 import Robots from './pages/Robots'
-import Locations from './pages/Locations'
 
 function App() {
   return (
@@ -12,7 +11,6 @@ function App() {
           <Route path="/" element={<Dashboard  />} />
           <Route path="/dashboard" element={<Dashboard  />} />
           <Route path="/robots" element={<Robots />} />
-          <Route path="/locations" element={<Locations />} />
         </Route>
       </Routes>
     </BrowserRouter>
